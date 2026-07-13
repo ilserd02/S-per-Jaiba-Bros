@@ -3,6 +3,7 @@
 import { createAnimations } from "./animations.js"
 
 /* global Phaser */
+
 const config = {
   type: Phaser.AUTO,
   width: 256,
@@ -13,7 +14,7 @@ const config = {
     default: 'arcade',
     arcade: {
       gravity: { y: 300 },
-      debug: true
+      debug: true // Mantiene el cuadro rosa activado para ver las físicas
     }
   },
   scene: {
@@ -29,13 +30,13 @@ function preload () {
   this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png')
   this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png')
 
-  // Cargamos la jaiba como spritesheet dividida en sus 6 frames
-  // Buscamos esta sección y cambiamos los tamaños:
-this.load.spritesheet(
+  // Medidas de la nueva cuadrícula (1298x1212 dividida en 6 col x 2 filas)
+  this.load.spritesheet(
     'mario', 
     'assets/entities/mario.png',
-    { frameWidth: 216, frameHeight: 606 } // <-- Nuevas medidas exactas para la cuadrícula
+    { frameWidth: 216, frameHeight: 606 }
   )
+
   this.load.audio('gameover', 'assets/sound/music/gameover.mp3')
 }
 
@@ -65,30 +66,24 @@ function create () {
     this.floor.create(bloque.x, bloque.y, 'floorbricks').setOrigin(0, 0.5).refreshBody()
   })
 
-  // Obstáculo
   this.floor.create(900, config.height - 32, 'floorbricks').setOrigin(0, 0.5).refreshBody()
   this.floor.create(916, config.height - 32, 'floorbricks').setOrigin(0, 0.5).refreshBody()
   this.floor.create(916, config.height - 48, 'floorbricks').setOrigin(0, 0.5).refreshBody()
 
-  // Creamos la Jaiba y la reducimos un poco para que no sea gigante
-this.mario = this.physics.add.sprite(50, 100, 'mario')
+  // --- CONFIGURACIÓN DE LA JAIBA ---
+  this.mario = this.physics.add.sprite(50, 100, 'mario')
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
     .setGravityY(300)
-    .setScale(0.08) // Escala adaptada para la nueva resolución
+    .setScale(0.08)
 
-  // Ajustamos la caja de colisión para que toque el suelo
-  // Ancho: 180, Alto: 380 (quita el espacio vacío de arriba y abajo)
-  // Ajustamos la caja para que sea un poco más alta y ancha, cubriendo la caminata
-  this.mario.body.setSize(200, 480)
-  
-  // Bajamos el desfase para que las patas de ambas animaciones toquen el límite
-  this.mario.body.setOffset(8, 120)
-  //
-  
- this.anims.create({
+  // Aquí ajustamos el tamaño de la caja rosa para el estado quieto
+  this.mario.body.setSize(180, 260) 
+  this.mario.body.setOffset(18, 345)
+
+  // --- ANIMACIONES ---
+  this.anims.create({
     key: 'jaiba-walk',
-    // Los cuadros 7, 8, 9, 10 equivalen al índice 6, 7, 8, 9 en programación
     frames: this.anims.generateFrameNumbers('mario', { start: 6, end: 9 }),
     frameRate: 12,
     repeat: -1
@@ -96,9 +91,8 @@ this.mario = this.physics.add.sprite(50, 100, 'mario')
 
   this.anims.create({
     key: 'jaiba-idle',
-    frames: [{ key: 'mario', frame: 0 }] // Posición quieta (el cuadro 1)
+    frames: [{ key: 'mario', frame: 0 }]
   })
-  //
 
   this.physics.world.setBounds(0, 0, 2000, config.height)
   this.physics.add.collider(this.mario, this.floor)
@@ -112,16 +106,20 @@ this.mario = this.physics.add.sprite(50, 100, 'mario')
 function update () {
   if (this.mario.isDead) return
 
+  // --- TRUCO DE MOVIMIENTO Y ALTURA EN TIEMPO REAL ---
   if (this.keys.left.isDown) {
     this.mario.anims.play('jaiba-walk', true)
     this.mario.x -= 2
     this.mario.flipX = true
+    this.mario.body.setOffset(18, 120) // Ajusta el dibujo hacia abajo al caminar a la izquierda
   } else if (this.keys.right.isDown) {
     this.mario.anims.play('jaiba-walk', true)
     this.mario.x += 2
     this.mario.flipX = false
+    this.mario.body.setOffset(18, 120) // Ajusta el dibujo hacia abajo al caminar a la derecha
   } else {
     this.mario.anims.play('jaiba-idle', true)
+    this.mario.body.setOffset(18, 345) // Regresa el dibujo a su sitio cuando se queda quieta
   }
 
   if (this.keys.up.isDown && this.mario.body.touching.down) {
@@ -142,4 +140,3 @@ function update () {
     }, 2000)
   }
 }
-
