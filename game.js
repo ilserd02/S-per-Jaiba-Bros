@@ -75,7 +75,7 @@ function create () {
     .setOrigin(0, 1)
     .setCollideWorldBounds(true)
     .setGravityY(300)
-    .setScale(0.25) // <-- ¡Cambiado a 0.05 para que no sea gigante!
+    .setScale(0.15) // <-- ¡Cambiado a 0.05 para que no sea gigante!
   // Creamos una animación simple de caminata con los primeros 3 frames de tu imagen
   this.anims.create({
     key: 'jaiba-walk',
