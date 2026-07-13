@@ -30,12 +30,12 @@ function preload () {
   this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png')
 
   // Cargamos la jaiba como spritesheet dividida en sus 6 frames
+  // Buscamos esta sección y cambiamos los tamaños:
   this.load.spritesheet(
     'mario', 
     'assets/entities/mario.png',
-    { frameWidth: 86, frameHeight: 70 } // Tamaño aproximado de cada frame
+    { frameWidth: 266, frameHeight: 546 } // <-- ¡Cambiado a las medidas reales!
   )
-
   this.load.audio('gameover', 'assets/sound/music/gameover.mp3')
 }
 
@@ -75,8 +75,7 @@ function create () {
     .setOrigin(0, 1)
     .setCollideWorldBounds(true)
     .setGravityY(300)
-    .setScale(0.3) // Ajusta este tamaño si queda muy grande
-
+    .setScale(0.05) // <-- ¡Cambiado a 0.05 para que no sea gigante!
   // Creamos una animación simple de caminata con los primeros 3 frames de tu imagen
   this.anims.create({
     key: 'jaiba-walk',
