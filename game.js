@@ -104,39 +104,28 @@ function create () {
 }
 
 function update () {
-  if (this.mario.isDead) return
-
-  // --- TRUCO DE MOVIMIENTO Y ALTURA EN TIEMPO REAL ---
+ // --- AJUSTE DE MOVIMIENTO, LOGÍTICA Y ALTURAS ---
   if (this.keys.left.isDown) {
     this.mario.anims.play('jaiba-walk', true)
     this.mario.x -= 2
     this.mario.flipX = true
-    this.mario.body.setOffset(18, 120) // Ajusta el dibujo hacia abajo al caminar a la izquierda
+    
+    // Ajusta la caja rosa para la caminata a la izquierda
+    this.mario.body.setSize(160, 220)
+    this.mario.body.setOffset(28, 200) 
   } else if (this.keys.right.isDown) {
     this.mario.anims.play('jaiba-walk', true)
     this.mario.x += 2
     this.mario.flipX = false
-    this.mario.body.setOffset(18, 120) // Ajusta el dibujo hacia abajo al caminar a la derecha
+    
+    // Ajusta la caja rosa para la caminata a la derecha
+    this.mario.body.setSize(160, 220)
+    this.mario.body.setOffset(28, 200)
   } else {
     this.mario.anims.play('jaiba-idle', true)
-    this.mario.body.setOffset(18, 345) // Regresa el dibujo a su sitio cuando se queda quieta
-  }
-
-  if (this.keys.up.isDown && this.mario.body.touching.down) {
-    this.mario.setVelocityY(-250)
-  }
-
-  if (this.mario.y >= config.height) {
-    this.mario.isDead = true
-    this.mario.setCollideWorldBounds(false)
-    this.sound.add('gameover', { volume: 0.2 }).play()
-
-    setTimeout(() => {
-      this.mario.setVelocityY(-350)
-    }, 100)
-
-    setTimeout(() => {
-      this.scene.restart()
-    }, 2000)
+    
+    // Ajusta la caja rosa cuando se queda quieta para que no se hunda
+    this.mario.body.setSize(160, 220)
+    this.mario.body.setOffset(28, 340)
   }
 }
