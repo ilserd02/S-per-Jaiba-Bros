@@ -13,7 +13,7 @@ const config = {
     default: 'arcade',
     arcade: {
       gravity: { y: 300 },
-      debug: false
+      debug: true
     }
   },
   scene: {
@@ -71,11 +71,16 @@ function create () {
   this.floor.create(916, config.height - 48, 'floorbricks').setOrigin(0, 0.5).refreshBody()
 
   // Creamos la Jaiba y la reducimos un poco para que no sea gigante
-  this.mario = this.physics.add.sprite(50, 100, 'mario')
-    .setOrigin(0, 1)
+ this.mario = this.physics.add.sprite(50, 100, 'mario')
+    .setOrigin(0.5, 0.5) // <-- Cambiado a 0.5 para centrar el eje
     .setCollideWorldBounds(true)
     .setGravityY(300)
-    .setScale(0.15) // <-- ¡Cambiado a 0.05 para que no sea gigante!
+    .setScale(0.15) 
+
+  // Ajustamos el tamaño del cuerpo físico para que coincida con el dibujo
+  // y no con el espacio vacío transparente.
+  this.mario.body.setSize(200, 400) // Ajusta el ancho y alto real de la jaiba
+  this.mario.body.setOffset(30, 50)  // Mueve la caja para centrarla en sus patas
   // Creamos una animación simple de caminata con los primeros 3 frames de tu imagen
   this.anims.create({
     key: 'jaiba-walk',
