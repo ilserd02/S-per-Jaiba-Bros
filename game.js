@@ -14,7 +14,7 @@ const config = {
     default: 'arcade',
     arcade: {
       gravity: { y: 300 },
-      debug: true // Mantiene el cuadro rosa activado para ver las físicas
+      debug: true // Para que veas exactamente dónde pisa el cuadro rosa
     }
   },
   scene: {
@@ -30,7 +30,7 @@ function preload () {
   this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png')
   this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png')
 
-  // Medidas de la nueva cuadrícula (1298x1212 dividida en 6 col x 2 filas)
+  // Mantenemos tus medidas del archivo 1298x1212
   this.load.spritesheet(
     'mario', 
     'assets/entities/mario.png',
@@ -70,16 +70,17 @@ function create () {
   this.floor.create(916, config.height - 32, 'floorbricks').setOrigin(0, 0.5).refreshBody()
   this.floor.create(916, config.height - 48, 'floorbricks').setOrigin(0, 0.5).refreshBody()
 
-  // --- CONFIGURACIÓN DE LA JAIBA ---
+  // --- NUEVA CONFIGURACIÓN FIJA DE LA JAIBA ---
+  // Cambiamos el origen a (0.5, 1) para que el eje del personaje esté en la planta de sus pies
   this.mario = this.physics.add.sprite(50, 100, 'mario')
-    .setOrigin(0.5, 0.5)
+    .setOrigin(0.5, 1) 
     .setCollideWorldBounds(true)
     .setGravityY(300)
     .setScale(0.08)
 
-  // Aquí ajustamos el tamaño de la caja rosa para el estado quieto
-  this.mario.body.setSize(180, 260) 
-  this.mario.body.setOffset(18, 345)
+  // Definimos una caja rosa fija para todos los estados que no se moverá de lugar
+  this.mario.body.setSize(160, 240) 
+  this.mario.body.setOffset(28, 330) // Centrada en la base para que pise el suelo
 
   // --- ANIMACIONES ---
   this.anims.create({
@@ -104,28 +105,37 @@ function create () {
 }
 
 function update () {
- // --- AJUSTE DE MOVIMIENTO, LOGÍTICA Y ALTURAS ---
+  if (this.mario.isDead) return
+
+  // --- MOVIMIENTO LIMPIO (Sin alterar la caja rosa en tiempo real) ---
   if (this.keys.left.isDown) {
     this.mario.anims.play('jaiba-walk', true)
     this.mario.x -= 2
     this.mario.flipX = true
-    
-    // Ajusta la caja rosa para la caminata a la izquierda
-    this.mario.body.setSize(160, 220)
-    this.mario.body.setOffset(28, 200) 
   } else if (this.keys.right.isDown) {
     this.mario.anims.play('jaiba-walk', true)
     this.mario.x += 2
     this.mario.flipX = false
-    
-    // Ajusta la caja rosa para la caminata a la derecha
-    this.mario.body.setSize(160, 220)
-    this.mario.body.setOffset(28, 200)
   } else {
     this.mario.anims.play('jaiba-idle', true)
-    
-    // Ajusta la caja rosa cuando se queda quieta para que no se hunda
-    this.mario.body.setSize(160, 220)
-    this.mario.body.setOffset(28, 340)
+  }
+
+  // Al estar la caja bien apoyada, este condicional volverá a dejarte saltar
+  if (this.keys.up.isDown && this.mario.body.touching.down) {
+    this.mario.setVelocityY(-250)
+  }
+
+  if (this.mario.y >= config.height) {
+    this.mario.isDead = true
+    this.mario.setCollideWorldBounds(false)
+    this.sound.add('gameover', { volume: 0.2 }).play()
+
+    setTimeout(() => {
+      this.mario.setVelocityY(-350)
+    }, 100)
+
+    setTimeout(() => {
+      this.scene.restart()
+    }, 2000)
   }
 }
