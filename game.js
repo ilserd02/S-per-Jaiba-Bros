@@ -31,10 +31,10 @@ function preload () {
 
   // Cargamos la jaiba como spritesheet dividida en sus 6 frames
   // Buscamos esta sección y cambiamos los tamaños:
-  this.load.spritesheet(
+this.load.spritesheet(
     'mario', 
     'assets/entities/mario.png',
-    { frameWidth: 266, frameHeight: 546 } // <-- ¡Cambiado a las medidas reales!
+    { frameWidth: 216, frameHeight: 606 } // <-- Nuevas medidas exactas para la cuadrícula
   )
   this.load.audio('gameover', 'assets/sound/music/gameover.mp3')
 }
@@ -71,28 +71,31 @@ function create () {
   this.floor.create(916, config.height - 48, 'floorbricks').setOrigin(0, 0.5).refreshBody()
 
   // Creamos la Jaiba y la reducimos un poco para que no sea gigante
- this.mario = this.physics.add.sprite(50, 100, 'mario')
-    .setOrigin(0.5, 0.5) // <-- Cambiado a 0.5 para centrar el eje
+this.mario = this.physics.add.sprite(50, 100, 'mario')
+    .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
     .setGravityY(300)
-    .setScale(0.15) 
+    .setScale(0.08) // Escala adaptada para la nueva resolución
 
-  // Ajustamos el tamaño del cuerpo físico para que coincida con el dibujo
-  // y no con el espacio vacío transparente.
-  this.mario.body.setSize(200, 400) // Ajusta el ancho y alto real de la jaiba
-  this.mario.body.setOffset(30, 50)  // Mueve la caja para centrarla en sus patas
-  // Creamos una animación simple de caminata con los primeros 3 frames de tu imagen
-  this.anims.create({
+  // Ajustamos la caja de colisión para que toque el suelo
+  // Ancho: 180, Alto: 380 (quita el espacio vacío de arriba y abajo)
+  this.mario.body.setSize(180, 380)
+  // Desplazamos la caja hacia abajo para que quede justo en sus patas
+  this.mario.body.setOffset(18, 200)
+  //
+ this.anims.create({
     key: 'jaiba-walk',
-    frames: this.anims.generateFrameNumbers('mario', { start: 0, end: 2 }),
-    frameRate: 10,
+    // Los cuadros 7, 8, 9, 10 equivalen al índice 6, 7, 8, 9 en programación
+    frames: this.anims.generateFrameNumbers('mario', { start: 6, end: 9 }),
+    frameRate: 12,
     repeat: -1
   })
 
   this.anims.create({
     key: 'jaiba-idle',
-    frames: [{ key: 'mario', frame: 0 }]
+    frames: [{ key: 'mario', frame: 0 }] // Posición quieta (el cuadro 1)
   })
+  //
 
   this.physics.world.setBounds(0, 0, 2000, config.height)
   this.physics.add.collider(this.mario, this.floor)
