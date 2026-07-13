@@ -2,6 +2,8 @@
 
 import { createAnimations } from "./animations.js"
 
+/* global Phaser */
+
 const config = {
   type: Phaser.AUTO, // webgl, canvas
   width: 256,
@@ -23,8 +25,115 @@ const config = {
 }
 
 new Phaser.Game(config)
-// this -> game -> el juego que estamos construyendo
 
+function preload () {
+  this.load.image(
+    'cloud1',
+    'assets/scenery/overworld/cloud1.png'
+  )
+
+  this.load.image(
+    'floorbricks',
+    'assets/scenery/overworld/floorbricks.png'
+  )
+
+  // CAMBIO 1: Ahora cargamos la jaiba como una IMAGEN fija, no como spritesheet
+  this.load.image(
+    'mario', 
+    'assets/entities/mario.png'
+  )
+
+  this.load.audio('gameover', 'assets/sound/music/gameover.mp3')
+}
+
+function create () {
+  this.add.image(100, 50, 'cloud1')
+    .setOrigin(0, 0)
+    .setScale(0.15)
+
+  this.floor = this.physics.add.staticGroup()
+
+  // --- EL SUELO CONTINUO ---
+  for (let x = 0; x < 2000; x += 16) {
+    if (x >= 600 && x <= 680) {
+      continue; // Hueco para caerse
+    }
+    this.floor
+      .create(x, config.height - 16, 'floorbricks')
+      .setOrigin(0, 0.5)
+      .refreshBody()
+  }
+
+  // --- BLOQUES FLOTANTES ---
+  const bloquesFlotantes = [
+    { x: 200, y: config.height - 80 },
+    { x: 216, y: config.height - 80 },
+    { x: 232, y: config.height - 80 },
+    { x: 400, y: config.height - 120 },
+    { x: 416, y: config.height - 120 },
+    { x: 750, y: config.height - 80 },
+    { x: 766, y: config.height - 80 }
+  ]
+
+  bloquesFlotantes.forEach(bloque => {
+    this.floor
+      .create(bloque.x, bloque.y, 'floorbricks')
+      .setOrigin(0, 0.5)
+      .refreshBody()
+  })
+
+  // Obstáculo
+  this.floor.create(900, config.height - 32, 'floorbricks').setOrigin(0, 0.5).refreshBody()
+  this.floor.create(916, config.height - 32, 'floorbricks').setOrigin(0, 0.5).refreshBody()
+  this.floor.create(916, config.height - 48, 'floorbricks').setOrigin(0, 0.5).refreshBody()
+
+  // CAMBIO 2: Creamos el personaje y le agregamos .setScale(0.15) al final para controlar su tamaño
+  this.mario = this.physics.add.sprite(50, 100, 'mario')
+    .setOrigin(0, 1)
+    .setCollideWorldBounds(true)
+    .setGravityY(300)
+    .setScale(0.15) 
+
+  this.physics.world.setBounds(0, 0, 2000, config.height)
+  this.physics.add.collider(this.mario, this.floor)
+
+  this.cameras.main.setBounds(0, 0, 2000, config.height)
+  this.cameras.main.startFollow(this.mario)
+
+  // CAMBIO 3: Quitamos la línea de las animaciones viejas que daba error
+  this.keys = this.input.keyboard.createCursorKeys()
+}
+
+function update () {
+  if (this.mario.isDead) return
+
+  // CAMBIO 4: Quitamos todas las líneas "this.mario.anims.play(...)" de aquí adentro
+  if (this.keys.left.isDown) {
+    this.mario.x -= 2
+    this.mario.flipX = true
+  } else if (this.keys.right.isDown) {
+    this.mario.x += 2
+    this.mario.flipX = false
+  }
+
+  if (this.keys.up.isDown && this.mario.body.touching.down) {
+    this.mario.setVelocityY(-300)
+  }
+
+  if (this.mario.y >= config.height) {
+    this.mario.isDead = true
+    this.mario.setCollideWorldBounds(false)
+    this.sound.add('gameover', { volume: 0.2 }).play()
+
+    setTimeout(() => {
+      this.mario.setVelocityY(-350)
+    }, 100)
+
+    setTimeout(() => {
+      this.scene.restart()
+    }, 2000)
+  }
+}
 function preload () {
   this.load.image(
     'cloud1',
