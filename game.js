@@ -79,10 +79,13 @@ this.mario = this.physics.add.sprite(50, 100, 'mario')
 
   // Ajustamos la caja de colisión para que toque el suelo
   // Ancho: 180, Alto: 380 (quita el espacio vacío de arriba y abajo)
-  this.mario.body.setSize(180, 380)
-  // Desplazamos la caja hacia abajo para que quede justo en sus patas
-  this.mario.body.setOffset(18, 200)
+  // Ajustamos la caja para que sea un poco más alta y ancha, cubriendo la caminata
+  this.mario.body.setSize(200, 480)
+  
+  // Bajamos el desfase para que las patas de ambas animaciones toquen el límite
+  this.mario.body.setOffset(8, 120)
   //
+  
  this.anims.create({
     key: 'jaiba-walk',
     // Los cuadros 7, 8, 9, 10 equivalen al índice 6, 7, 8, 9 en programación
