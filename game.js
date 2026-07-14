@@ -76,13 +76,14 @@ function create () {
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
     .setGravityY(300)
-    .setScale(0.1) // Ajustamos escala por la nueva resolución
+    .setScale(0.06) // Ajustamos escala por la nueva resolución
 
-  // Reducimos la caja para que cubra solo el cuerpo de la jaiba
+ // Mantenemos este tamaño de caja que ya viste que toca el suelo bien
   this.mario.body.setSize(180, 400)
-  // Desplazamos la caja hacia abajo para que coincida con sus patas
-  this.mario.body.setOffset(55, 450)
-
+  
+  // Aumentamos el offset vertical para empujar el dibujo de la jaiba hacia abajo
+  this.mario.body.setOffset(55, 120)
+  
   // --- ANIMACIONES ---
  this.anims.create({
     key: 'jaiba-walk',
