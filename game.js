@@ -41,10 +41,10 @@ function preload () {
     { frameWidth: 290, frameHeight: 902 } 
   )
 
-  // --- NUEVA JAIBA GRANDE (1641x959) ---
+  // Spritesheet de la jaiba grande (1641x959)
   this.load.spritesheet(
     'mario-grow', 
-    'assets/entities/mario-grow.png', // Ruta de tu nueva imagen grande
+    'assets/entities/mario-grow.png',
     { frameWidth: 273, frameHeight: 959 } 
   )
 
@@ -74,7 +74,7 @@ function create () {
   ]
 
   bloquesFlotantes.forEach(bloque => {
-    this.floor.create(bloque.x, block.y, 'floorbricks').setOrigin(0, 0.5).refreshBody()
+    this.floor.create(bloque.x, bloque.y, 'floorbricks').setOrigin(0, 0.5).refreshBody()
   })
 
   this.floor.create(900, config.height - 32, 'floorbricks').setOrigin(0, 0.5).refreshBody()
@@ -113,7 +113,7 @@ function create () {
     frames: [{ key: 'mario', frame: 0 }] 
   })
 
-  // --- ANIMACIONES JAIBA GRANDE (`mario-grow`) ---
+  // --- ANIMACIONES JAIBA GRANDE ---
   this.anims.create({
     key: 'jaiba-big-walk',
     frames: this.anims.generateFrameNumbers('mario-grow', { start: 1, end: 3 }),
@@ -132,7 +132,7 @@ function create () {
   this.physics.add.collider(this.mario, this.floor)
   this.physics.add.collider(this.mushrooms, this.floor)
 
-  // --- COLISIÓN PARA GOLPEAR LA CAJA DESDE ABAJO ---
+  // --- COLISIÓN GOLPEAR CAJA DESDE ABAJO ---
   this.physics.add.collider(this.mario, this.mysteryBoxes, (mario, boxHit) => {
     if (mario.body.touching.up && boxHit.hasItem) {
       boxHit.hasItem = false
@@ -145,17 +145,15 @@ function create () {
     }
   })
 
-  // --- COLISIÓN DE OVERLAP PARA VOLVERSE GRANDE Y CAMBIAR DE SPRITE ---
+  // --- COLISIÓN OVERLAP PARA VOLVERSE GRANDE ---
   this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
     mushroomHit.destroy() 
 
     if (!mario.isBig) {
       mario.isBig = true
       
-      // Cambiamos la textura base al nuevo spritesheet grande de golpe
+      // Cambiamos la textura base al nuevo spritesheet grande
       mario.setTexture('mario-grow')
-      
-      // Ajustamos la escala visual adecuada para la nueva imagen
       mario.setScale(0.12)
       
       // Caja rosa optimizada para el nuevo archivo de la jaiba grande (anti-paredes)
@@ -168,12 +166,21 @@ function create () {
   this.cameras.main.startFollow(this.mario)
 
   this.keys = this.input.keyboard.createCursorKeys()
+
+  // --- BLOQUEO DE DESPLAZAMIENTO DEL NAVEGADOR ---
+  // Esto captura las flechas para que no te muevan la barra de la ventana web
+  this.input.keyboard.addCapture([
+    Phaser.Input.Keyboard.KeyCodes.UP,
+    Phaser.Input.Keyboard.KeyCodes.DOWN,
+    Phaser.Input.Keyboard.KeyCodes.LEFT,
+    Phaser.Input.Keyboard.KeyCodes.RIGHT
+  ])
 }
 
 function update () {
   if (this.mario.isDead) return
 
-  // Elegimos las llaves de animación correctas dinámicamente según el estado de crecimiento
+  // Elegimos las llaves de animación correctas dinámicamente según el tamaño
   const walkKey = this.mario.isBig ? 'jaiba-big-walk' : 'jaiba-walk'
   const idleKey = this.mario.isBig ? 'jaiba-big-idle' : 'jaiba-idle'
 
