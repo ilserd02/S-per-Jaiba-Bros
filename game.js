@@ -41,8 +41,9 @@ function preload () {
   this.load.spritesheet('mario', 'assets/entities/mario.png', { frameWidth: 273, frameHeight: 547 }) 
   this.load.spritesheet('mario-grow', 'assets/entities/mario-grown.png', { frameWidth: 273, frameHeight: 547 }) 
 
-  // Jaiba comiendo: Medidas basadas en tus dimensiones de 1536 x 1024 (256 de ancho por frame)
-  this.load.spritesheet('jaiba-eating', 'assets/entities/jaiba-eating.png', { frameWidth: 256, frameHeight: 1024 })
+  // CORREGIDO: Apunta al archivo real 'mario-eat.png' que subiste a GitHub
+  // Mantiene la división de 1536 de ancho entre 6 fotogramas = 256px
+  this.load.spritesheet('jaiba-eating', 'assets/entities/mario-eat.png', { frameWidth: 256, frameHeight: 1024 })
 
   // --- ENEMIGO GOOMBA ---
   this.load.spritesheet('goomba', 'assets/entities/overworld/goomba.png', { frameWidth: 16, frameHeight: 16 })
@@ -66,7 +67,7 @@ function create () {
   this.floor.create(580, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).refreshBody()
   this.floor.create(700, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).refreshBody()
 
-  // --- CAJA MISTERIOSA Y ENMIGOS ---
+  // --- CAJA MISTERIOSA Y ENEMIGOS ---
   this.mysteryBoxes = this.physics.add.staticGroup()
   const box = this.mysteryBoxes.create(80, config.height - 90, 'mysteryBox').setOrigin(0, 0.5).refreshBody()
   box.hasItem = true 
