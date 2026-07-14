@@ -36,10 +36,13 @@ function preload () {
   this.load.image('tube-medium', 'assets/scenery/vertical-large-tube.png') 
   this.load.image('tube-large', 'assets/scenery/vertical-large-tube.png') 
 
-  // --- CONFIGURACIÓN DE SPRITESHEETS REALES (EVITA EL TRAIN EFFECT) ---
-  // Dividimos el ancho total 1641 entre los 6 fotogramas de la jaiba = 273 de ancho
-  this.load.spritesheet('mario', 'assets/entities/mario.png', { frameWidth: 273, frameHeight: 959 })
-  this.load.spritesheet('mario-grow', 'assets/entities/mario-grown.png', { frameWidth: 273, frameHeight: 959 }) 
+  // --- CONFIGURACIÓN DE SPRITESHEETS INDEPENDIENTES ---
+  // Jaiba normal (Caminando): Ajustada a su altura nativa real para evitar error de frames en cero
+  this.load.spritesheet('mario', 'assets/entities/mario.png', { frameWidth: 273, frameHeight: 547 }) 
+  this.load.spritesheet('mario-grow', 'assets/entities/mario-grown.png', { frameWidth: 273, frameHeight: 547 }) 
+
+  // Jaiba comiendo: Medidas basadas en tus dimensiones de 1536 x 1024 (256 de ancho por frame)
+  this.load.spritesheet('jaiba-eating', 'assets/entities/jaiba-eating.png', { frameWidth: 256, frameHeight: 1024 })
 
   // --- ENEMIGO GOOMBA ---
   this.load.spritesheet('goomba', 'assets/entities/overworld/goomba.png', { frameWidth: 16, frameHeight: 16 })
@@ -63,7 +66,7 @@ function create () {
   this.floor.create(580, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).refreshBody()
   this.floor.create(700, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).refreshBody()
 
-  // --- CAJA MISTERIOSA ---
+  // --- CAJA MISTERIOSA Y ENMIGOS ---
   this.mysteryBoxes = this.physics.add.staticGroup()
   const box = this.mysteryBoxes.create(80, config.height - 90, 'mysteryBox').setOrigin(0, 0.5).refreshBody()
   box.hasItem = true 
@@ -82,8 +85,7 @@ function create () {
     repeat: -1
   })
 
-  // --- CONTROL LOCAL DE ANIMACIONES DE LA JAIBA ---
-  // Esto evita por completo el bug visual de ver toda la fila unida
+  // --- CREACIÓN DE ANIMACIONES PARA LA JAIBA ---
   this.anims.create({
     key: 'jaiba-walk',
     frames: this.anims.generateFrameNumbers('mario', { start: 1, end: 3 }),
@@ -108,6 +110,14 @@ function create () {
     frames: [{ key: 'mario-grow', frame: 0 }]
   })
 
+  // Animación de comer (Usa secuencialmente los 6 fotogramas de la imagen nueva)
+  this.anims.create({
+    key: 'jaiba-eat-mushroom',
+    frames: this.anims.generateFrameNumbers('jaiba-eating', { start: 0, end: 5 }),
+    frameRate: 6,
+    repeat: 0
+  })
+
   // --- CREACIÓN DEL JUGADOR ---
   this.mario = this.physics.add.sprite(50, 100, 'mario')
     .setOrigin(0.5, 0.5)
@@ -115,10 +125,12 @@ function create () {
     .setGravityY(300)
     .setScale(0.04) 
 
-  // Ajustes de colisión sobre los pies reales de la jaiba cartero
+  // Caja de colisión adaptada a la jaiba normal
   this.mario.body.setSize(220, 240)
-  this.mario.body.setOffset(25, 700)
+  this.mario.body.setOffset(25, 280)
+  
   this.mario.isBig = false 
+  this.mario.isEating = false // Variable de control para pausar movimientos al comer
 
   this.physics.world.setBounds(0, 0, 2000, config.height)
   
@@ -144,20 +156,40 @@ function create () {
     }
   })
 
-  // Recoger hongo
+  // --- LÓGICA DE ALIMENTACIÓN CON ANIMACIÓN CINEMÁTICA ---
   this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
+    if (mario.isEating) return 
+    
     mushroomHit.destroy() 
+    
     if (!mario.isBig) {
-      mario.isBig = true
-      mario.setTexture('mario-grow')
-      mario.setScale(0.08) 
-      mario.body.setSize(240, 260)
-      mario.body.setOffset(20, 680)
+      mario.isEating = true
+      mario.setVelocity(0, 0) // Detiene el avance físico
+      mario.body.allowGravity = false // Lo mantiene flotando/congelado momentáneamente
+      
+      // Cambiamos a la textura de comer y adaptamos la escala debido a los 1024px de alto
+      mario.setTexture('jaiba-eating')
+      mario.setScale(0.04) 
+      mario.anims.play('jaiba-eat-mushroom')
+
+      // Al finalizar la secuencia completa de 6 cuadros, pasa al estado grande
+      mario.once('animationcomplete-jaiba-eat-mushroom', () => {
+        mario.isBig = true
+        mario.isEating = false
+        mario.body.allowGravity = true 
+        
+        mario.setTexture('mario-grow')
+        mario.setScale(0.08) // Escala definitiva de Jaiba Grande
+        mario.body.setSize(240, 260)
+        mario.body.setOffset(20, 260)
+      })
     }
   })
 
   // Interacción Goombas
   this.physics.add.collider(this.mario, this.goombas, (mario, goombaHit) => {
+    if (mario.isEating) return // Invulnerable mientras reproduce la cinemática de comer
+    
     if (mario.body.touching.down && goombaHit.body.touching.up) {
       mario.setVelocityY(-180) 
       goombaHit.setVelocityX(0)
@@ -176,7 +208,7 @@ function create () {
         mario.setTexture('mario') 
         mario.setScale(0.04)
         mario.body.setSize(220, 240)
-        mario.body.setOffset(25, 700)
+        mario.body.setOffset(25, 280)
         goombaHit.setVelocityX(goombaHit.body.velocity.x * -1) 
       } else {
         mario.isDead = true
@@ -201,9 +233,9 @@ function update () {
     }
   })
 
-  if (this.mario.isDead) return
+  // Bloquea los controles si está muerto o reproduciendo la animación de alimentación
+  if (this.mario.isDead || this.mario.isEating) return
 
-  // --- DISPARADORES DE ANIMACIÓN SEGUROS ---
   const walkKey = this.mario.isBig ? 'jaiba-big-walk' : 'jaiba-walk'
   const idleKey = this.mario.isBig ? 'jaiba-big-idle' : 'jaiba-idle'
 
@@ -228,7 +260,6 @@ function update () {
     this.mario.isDead = true
     this.mario.setCollideWorldBounds(false)
     try { this.sound.add('gameover', { volume: 0.2 }).play() } catch(e){}
-    setTimeout(() => { this.mario.setVelocityY(-350) }, 100)
     setTimeout(() => { this.scene.restart() }, 2000)
   }
 }
