@@ -27,7 +27,6 @@ function preload () {
   this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png')
 
   // --- BLOQUES Y ELEMENTOS ---
-  // Se carga la caja misteriosa como spritesheet de 3 frames (16x16 cada uno) para poder animarla
   this.load.spritesheet('mysteryBox', 'assets/blocks/overworld/misteryBlock.png', { frameWidth: 16, frameHeight: 16 })
   this.load.image('emptyBox', 'assets/blocks/overworld/emptyBlock.png')     
   this.load.image('mushroom', 'assets/collectibles/super-mushroom.png')
@@ -64,7 +63,7 @@ function create () {
   this.floor.create(580, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).refreshBody()
   this.floor.create(700, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).refreshBody()
 
-  // --- ANIMACIÓN DE LA CAJA MISTERIOSA (Cambia de color en bucle) ---
+  // --- ANIMACIÓN DE LA CAJA MISTERIOSA ---
   this.anims.create({
     key: 'box-shine',
     frames: this.anims.generateFrameNumbers('mysteryBox', { start: 0, end: 2 }),
@@ -72,11 +71,11 @@ function create () {
     repeat: -1
   })
 
-  // --- CREACIÓN DE LA CAJA COMO OBJETO SÓLIDO Y ANIMADO ---
-  this.mysteryBoxes = this.physics.add.staticGroup() // Sólido para colisiones
+  // --- CREACIÓN DE LA CAJA ---
+  this.mysteryBoxes = this.physics.add.staticGroup()
   const box = this.mysteryBoxes.create(80, config.height - 90, 'mysteryBox').setOrigin(0, 0.5).refreshBody()
   box.hasItem = true 
-  box.anims.play('box-shine', true) // Inicia su ciclo de animación visual
+  box.anims.play('box-shine', true)
 
   this.mushrooms = this.physics.add.group()
   this.goombas = this.physics.add.group()
@@ -131,9 +130,9 @@ function create () {
     .setGravityY(300)
     .setScale(0.04) 
 
-  // Caja de colisión inicial ajustada
-  this.mario.body.setSize(220, 480)
-  this.mario.body.setOffset(25, 40)
+  // Caja limpia inicial
+  this.mario.body.setSize(240, 500)
+  this.mario.body.setOffset(15, 20)
   
   this.mario.isBig = false 
   this.mario.isEating = false 
@@ -144,12 +143,12 @@ function create () {
   this.physics.add.collider(this.mushrooms, this.floor)
   this.physics.add.collider(this.goombas, this.floor)
 
-  // Golpear bloque misterioso sólido
+  // Golpear bloque misterioso
   this.physics.add.collider(this.mario, this.mysteryBoxes, (mario, boxHit) => {
     if (mario.body.touching.up && boxHit.hasItem) {
       boxHit.hasItem = false
-      boxHit.anims.stop() // Detiene la animación de destellos
-      boxHit.setTexture('emptyBox') // Cambia al sprite estático vacío
+      boxHit.anims.stop()
+      boxHit.setTexture('emptyBox') 
       boxHit.refreshBody()
 
       const mushroom = this.mushrooms.create(boxHit.x + 8, boxHit.y - 18, 'mushroom')
@@ -158,7 +157,7 @@ function create () {
     }
   })
 
-  // --- LÓGICA DE ALIMENTACIÓN CORREGIDA (JAIBAS SIN HUNDIRSE) ---
+  // --- REPARADO DEFINITIVO: EVITAR ATRAPADO EN BLOQUES ---
   this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
     if (mario.isEating) return 
     
@@ -171,7 +170,6 @@ function create () {
       
       mario.setTexture('jaiba-eating')
       mario.setScale(0.04) 
-      mario.body.setOffset(25, 10) 
       mario.anims.play('jaiba-eat-mushroom')
 
       mario.once('animationcomplete-jaiba-eat-mushroom', () => {
@@ -182,9 +180,15 @@ function create () {
         mario.setTexture('mario-grow')
         mario.setScale(0.08) 
         
-        // CORRECCIÓN FÍSICA CLAVE: Ajuste exacto para mantenerse firme sobre el suelo
-        mario.body.setSize(220, 500)
-        mario.body.setOffset(25, 20) 
+        // REPOSICIONAMIENTO SEGURO: Empuja al jugador hacia arriba para que no lo absorba el piso
+        mario.y -= 25 
+        
+        // Caja física optimizada y limpia para el tamaño grande
+        mario.body.setSize(240, 500)
+        mario.body.setOffset(15, 20)
+        
+        // Forzar al motor físico a recalcular la posición fuera de colisiones
+        mario.body.reset(mario.x, mario.y)
       })
     }
   })
@@ -210,8 +214,10 @@ function create () {
         mario.isBig = false
         mario.setTexture('mario') 
         mario.setScale(0.04)
-        mario.body.setSize(220, 480)
-        mario.body.setOffset(25, 40)
+        mario.y -= 10
+        mario.body.setSize(240, 500)
+        mario.body.setOffset(15, 20)
+        mario.body.reset(mario.x, mario.y)
       } else {
         mario.isDead = true
         mario.setVelocity(0, -300)
@@ -262,4 +268,3 @@ function update () {
     setTimeout(() => { this.scene.restart() }, 2000)
   }
 }
-
