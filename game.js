@@ -113,16 +113,17 @@ function create () {
 function update () {
   if (this.mario.isDead) return
 
-  // --- MOVIMIENTO LIMPIO (Sin alterar la caja rosa en tiempo real) ---
+ // --- MOVIMIENTO CON VELOCIDAD FÍSICA (Corrige el traspaso de paredes) ---
   if (this.keys.left.isDown) {
+    this.mario.setVelocityX(-120) // Mueve con física hacia la izquierda
     this.mario.anims.play('jaiba-walk', true)
-    this.mario.x -= 2
     this.mario.flipX = true
   } else if (this.keys.right.isDown) {
+    this.mario.setVelocityX(120)  // Mueve con física hacia la derecha
     this.mario.anims.play('jaiba-walk', true)
-    this.mario.x += 2
     this.mario.flipX = false
   } else {
+    this.mario.setVelocityX(0)     // Se detiene en seco al soltar la tecla
     this.mario.anims.play('jaiba-idle', true)
   }
 
