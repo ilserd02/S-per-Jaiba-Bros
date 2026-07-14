@@ -112,3 +112,159 @@ function create () {
   })
 
   this.anims.create({
+    key: 'jaiba-big-idle',
+    frames: [{ key: 'mario-grow', frame: 0 }]
+  })
+
+  this.anims.create({
+    key: 'jaiba-eat-mushroom',
+    frames: this.anims.generateFrameNumbers('jaiba-eating', { start: 0, end: 5 }),
+    frameRate: 6,
+    repeat: 0
+  })
+
+  // --- CREACIÓN DEL JUGADOR ---
+  this.mario = this.physics.add.sprite(50, 100, 'mario')
+    .setOrigin(0.5, 0.5)
+    .setCollideWorldBounds(true)
+    .setGravityY(300)
+    .setScale(0.04) 
+
+  // Caja de colisión calibrada baja y estrecha
+  this.mario.body.setSize(160, 180)
+  this.mario.body.setOffset(56, 360)
+  
+  this.mario.isBig = false 
+  this.mario.isEating = false 
+
+  this.physics.world.setBounds(0, 0, 2000, config.height)
+  
+  this.physics.add.collider(this.mario, this.floor)
+  this.physics.add.collider(this.mushrooms, this.floor)
+  this.physics.add.collider(this.goombas, this.floor)
+
+  // Golpear bloque misterioso
+  this.physics.add.collider(this.mario, this.mysteryBoxes, (mario, boxHit) => {
+    if (mario.body.touching.up && boxHit.hasItem) {
+      boxHit.hasItem = false
+      boxHit.anims.stop()
+      boxHit.setTexture('emptyBox') 
+      boxHit.refreshBody()
+
+      const mushroom = this.mushrooms.create(boxHit.x + 8, boxHit.y - 18, 'mushroom')
+      mushroom.setOrigin(0.5, 0.5)
+      mushroom.setVelocityX(50) 
+    }
+  })
+
+  // --- LÓGICA DE ALIMENTACIÓN ---
+  this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
+    if (mario.isEating) return 
+    
+    mushroomHit.destroy() 
+    
+    if (!mario.isBig) {
+      mario.isEating = true
+      mario.setVelocity(0, 0)
+      mario.body.allowGravity = false 
+      
+      mario.setTexture('jaiba-eating')
+      mario.setScale(0.04) 
+      
+      mario.body.setSize(160, 180)
+      mario.body.setOffset(48, 840)
+      mario.anims.play('jaiba-eat-mushroom')
+
+      mario.once('animationcomplete-jaiba-eat-mushroom', () => {
+        mario.isBig = true
+        mario.isEating = false
+        mario.body.allowGravity = true 
+        
+        mario.setTexture('mario-grow')
+        mario.setScale(0.08) 
+        
+        mario.y -= 10 
+        
+        mario.body.setSize(160, 190)
+        mario.body.setOffset(56, 350)
+        
+        mario.body.reset(mario.x, mario.y)
+      })
+    }
+  })
+
+  // Interacción Goombas
+  this.physics.add.collider(this.mario, this.goombas, (mario, goombaHit) => {
+    if (mario.isEating) return 
+    
+    if (mario.body.touching.down && goombaHit.body.touching.up) {
+      mario.setVelocityY(-180) 
+      goombaHit.setVelocityX(0)
+      goombaHit.body.enable = false
+      goombaHit.setFrame(2)
+
+      this.tweens.add({
+        targets: goombaHit,
+        alpha: 0,
+        duration: 300,
+        onComplete: () => { goombaHit.destroy() }
+      })
+    } else {
+      if (mario.isBig) {
+        mario.isBig = false
+        mario.setTexture('mario') 
+        mario.setScale(0.04)
+        mario.y -= 5
+        mario.body.setSize(160, 180)
+        mario.body.setOffset(56, 360)
+        mario.body.reset(mario.x, mario.y)
+      } else {
+        mario.isDead = true
+        mario.setVelocity(0, -300)
+        mario.setCollideWorldBounds(false)
+        setTimeout(() => this.scene.restart(), 2000)
+      }
+    }
+  })
+
+  this.cameras.main.setBounds(0, 0, 2000, config.height)
+  this.cameras.main.startFollow(this.mario)
+
+  this.keys = this.input.keyboard.createCursorKeys()
+}
+
+function update () {
+  this.goombas.children.iterate(goomba => {
+    if (goomba && goomba.body && goomba.body.enable) {
+      goomba.anims.play('goomba-walk', true)
+    }
+  })
+
+  if (this.mario.isDead || this.mario.isEating) return
+
+  const walkKey = this.mario.isBig ? 'jaiba-big-walk' : 'jaiba-walk'
+  const idleKey = this.mario.isBig ? 'jaiba-big-idle' : 'jaiba-idle'
+
+  if (this.keys.left.isDown) {
+    this.mario.setVelocityX(-120) 
+    this.mario.anims.play(walkKey, true) 
+    this.mario.flipX = true
+  } else if (this.keys.right.isDown) {
+    this.mario.setVelocityX(120)  
+    this.mario.anims.play(walkKey, true) 
+    this.mario.flipX = false
+  } else {
+    this.mario.setVelocityX(0)     
+    this.mario.anims.play(idleKey, true) 
+  }
+
+  if (this.keys.up.isDown && this.mario.body.touching.down) {
+    this.mario.setVelocityY(-285)
+  }
+
+  if (this.mario.y >= config.height) {
+    this.mario.isDead = true
+    this.mario.setCollideWorldBounds(false)
+    setTimeout(() => { this.scene.restart() }, 2000)
+  }
+}
