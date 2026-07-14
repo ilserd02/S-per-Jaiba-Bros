@@ -125,7 +125,7 @@ function update () {
 
   // Al estar la caja bien apoyada, este condicional volverá a dejarte saltar
   if (this.keys.up.isDown && this.mario.body.touching.down) {
-    this.mario.setVelocityY(-250)
+    this.mario.setVelocityY(-260)
   }
 
   if (this.mario.y >= config.height) {
