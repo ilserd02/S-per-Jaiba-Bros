@@ -30,15 +30,22 @@ function preload () {
   this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png')
   this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png')
 
-  // --- CORRECCIÓN DE ASSETS CON TUS NOMBRES REALES ---
+  // Assets con tus nombres reales
   this.load.image('mysteryBox', 'assets/scenery/overworld/floorbricks.png')
-  this.load.image('mushroom', 'assets/entities/super-mushroom.png') // Ruta apuntando a tu hongo
+  this.load.image('mushroom', 'assets/entities/super-mushroom.png') 
 
-  // Mantenemos tus medidas del archivo 1744x902 (Opción 1)
+  // Spritesheet de la jaiba pequeña (Opción 1: 1744x902)
   this.load.spritesheet(
     'mario', 
     'assets/entities/mario.png',
     { frameWidth: 290, frameHeight: 902 } 
+  )
+
+  // --- NUEVA JAIBA GRANDE (1641x959) ---
+  this.load.spritesheet(
+    'mario-grow', 
+    'assets/entities/mario-grow.png', // Ruta de tu nueva imagen grande
+    { frameWidth: 273, frameHeight: 959 } 
   )
 
   this.load.audio('gameover', 'assets/sound/music/gameover.mp3')
@@ -67,22 +74,21 @@ function create () {
   ]
 
   bloquesFlotantes.forEach(bloque => {
-    this.floor.create(bloque.x, bloque.y, 'floorbricks').setOrigin(0, 0.5).refreshBody()
+    this.floor.create(bloque.x, block.y, 'floorbricks').setOrigin(0, 0.5).refreshBody()
   })
 
   this.floor.create(900, config.height - 32, 'floorbricks').setOrigin(0, 0.5).refreshBody()
   this.floor.create(916, config.height - 32, 'floorbricks').setOrigin(0, 0.5).refreshBody()
   this.floor.create(916, config.height - 48, 'floorbricks').setOrigin(0, 0.5).refreshBody()
 
-  // --- SISTEMA DE MYSTERY BOX Y GRUPO DE HONGOS ---
+  // --- MYSTERY BOX Y GRUPO DE HONGOS ---
   this.mysteryBoxes = this.physics.add.staticGroup()
   const box = this.mysteryBoxes.create(320, config.height - 90, 'mysteryBox').setOrigin(0, 0.5).refreshBody()
   box.hasItem = true 
 
   this.mushrooms = this.physics.add.group()
 
-  // --- CONFIGURACIÓN DE LA JAIBA ---
-  // Empieza pequeña (0.05) para poder probar el crecimiento
+  // --- CONFIGURACIÓN DE LA JAIBA PEQUEÑA INICIAL ---
   this.mario = this.physics.add.sprite(50, 100, 'mario')
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
@@ -94,7 +100,7 @@ function create () {
   this.mario.body.setOffset(55, 450)
   this.mario.isBig = false 
   
-  // --- ANIMACIONES ---
+  // --- ANIMACIONES JAIBA PEQUEÑA ---
   this.anims.create({
     key: 'jaiba-walk',
     frames: this.anims.generateFrameNumbers('mario', { start: 1, end: 3 }),
@@ -105,6 +111,19 @@ function create () {
   this.anims.create({
     key: 'jaiba-idle',
     frames: [{ key: 'mario', frame: 0 }] 
+  })
+
+  // --- ANIMACIONES JAIBA GRANDE (`mario-grow`) ---
+  this.anims.create({
+    key: 'jaiba-big-walk',
+    frames: this.anims.generateFrameNumbers('mario-grow', { start: 1, end: 3 }),
+    frameRate: 10,
+    repeat: -1
+  })
+
+  this.anims.create({
+    key: 'jaiba-big-idle',
+    frames: [{ key: 'mario-grow', frame: 0 }] 
   })
 
   this.physics.world.setBounds(0, 0, 2000, config.height)
@@ -119,27 +138,29 @@ function create () {
       boxHit.hasItem = false
       boxHit.setTint(0x555555) 
 
-      // Aparece tu super-mushroom.png real arriba de la caja
       const mushroom = this.mushrooms.create(boxHit.x + 8, boxHit.y - 20, 'mushroom')
       mushroom.setOrigin(0.5, 0.5)
-      mushroom.setScale(1) // Escala normal para tu sprite del hongo
+      mushroom.setScale(1) 
       mushroom.setVelocityX(60) 
     }
   })
 
-  // --- COLISIÓN PARA VOLVERSE GRANDE ---
+  // --- COLISIÓN DE OVERLAP PARA VOLVERSE GRANDE Y CAMBIAR DE SPRITE ---
   this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
     mushroomHit.destroy() 
 
     if (!mario.isBig) {
       mario.isBig = true
       
-      // Cambia al tamaño grande que elegiste (0.12)
+      // Cambiamos la textura base al nuevo spritesheet grande de golpe
+      mario.setTexture('mario-grow')
+      
+      // Ajustamos la escala visual adecuada para la nueva imagen
       mario.setScale(0.12)
       
-      // Tu ajuste perfecto anti-paredes para la jaiba grande
+      // Caja rosa optimizada para el nuevo archivo de la jaiba grande (anti-paredes)
       mario.body.setSize(240, 260)
-      mario.body.setOffset(25, 305)
+      mario.body.setOffset(20, 320)
     }
   })
 
@@ -152,18 +173,22 @@ function create () {
 function update () {
   if (this.mario.isDead) return
 
+  // Elegimos las llaves de animación correctas dinámicamente según el estado de crecimiento
+  const walkKey = this.mario.isBig ? 'jaiba-big-walk' : 'jaiba-walk'
+  const idleKey = this.mario.isBig ? 'jaiba-big-idle' : 'jaiba-idle'
+
   // --- MOVIMIENTO CON VELOCIDAD FÍSICA ---
   if (this.keys.left.isDown) {
     this.mario.setVelocityX(-120) 
-    this.mario.anims.play('jaiba-walk', true)
+    this.mario.anims.play(walkKey, true)
     this.mario.flipX = true
   } else if (this.keys.right.isDown) {
     this.mario.setVelocityX(120)  
-    this.mario.anims.play('jaiba-walk', true)
+    this.mario.anims.play(walkKey, true)
     this.mario.flipX = false
   } else {
     this.mario.setVelocityX(0)     
-    this.mario.anims.play('jaiba-idle', true)
+    this.mario.anims.play(idleKey, true)
   }
 
   if (this.keys.up.isDown && this.mario.body.touching.down) {
