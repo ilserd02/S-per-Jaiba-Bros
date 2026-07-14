@@ -36,8 +36,8 @@ function preload () {
   this.load.image('tube-medium', 'assets/scenery/vertical-large-tube.png') 
   this.load.image('tube-large', 'assets/scenery/vertical-large-tube.png') 
 
-  // --- CORRECCIÓN JAIBA: CARGA COMO HOJA DE SPRITES CON MEDIDAS EXACTAS ---
-  // Dividimos 1641 / 6 frames = 273 de ancho
+  // --- CONFIGURACIÓN DE SPRITESHEETS REALES (EVITA EL TRAIN EFFECT) ---
+  // Dividimos el ancho total 1641 entre los 6 fotogramas de la jaiba = 273 de ancho
   this.load.spritesheet('mario', 'assets/entities/mario.png', { frameWidth: 273, frameHeight: 959 })
   this.load.spritesheet('mario-grow', 'assets/entities/mario-grown.png', { frameWidth: 273, frameHeight: 959 }) 
 
@@ -82,8 +82,8 @@ function create () {
     repeat: -1
   })
 
-  // --- CREACIÓN DE LAS ANIMACIONES DE LA JAIBA ---
-  // Usamos los primeros 3 frames para caminar, y el frame 0 para quedarse quieto
+  // --- CONTROL LOCAL DE ANIMACIONES DE LA JAIBA ---
+  // Esto evita por completo el bug visual de ver toda la fila unida
   this.anims.create({
     key: 'jaiba-walk',
     frames: this.anims.generateFrameNumbers('mario', { start: 1, end: 3 }),
@@ -108,14 +108,14 @@ function create () {
     frames: [{ key: 'mario-grow', frame: 0 }]
   })
 
-  // --- CONFIGURACIÓN DEL PERSONAJE ---
+  // --- CREACIÓN DEL JUGADOR ---
   this.mario = this.physics.add.sprite(50, 100, 'mario')
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
     .setGravityY(300)
-    .setScale(0.04) // Ajustado un poquito la escala para que cuadre con el tamaño del mapa
+    .setScale(0.04) 
 
-  // Ajustamos la caja de colisión física para que solo abarque el cuerpo de la jaiba
+  // Ajustes de colisión sobre los pies reales de la jaiba cartero
   this.mario.body.setSize(220, 240)
   this.mario.body.setOffset(25, 700)
   this.mario.isBig = false 
@@ -150,7 +150,7 @@ function create () {
     if (!mario.isBig) {
       mario.isBig = true
       mario.setTexture('mario-grow')
-      mario.setScale(0.08) // Crece de tamaño
+      mario.setScale(0.08) 
       mario.body.setSize(240, 260)
       mario.body.setOffset(20, 680)
     }
@@ -203,21 +203,21 @@ function update () {
 
   if (this.mario.isDead) return
 
-  // --- MANEJO DE ANIMACIONES AL MOVERSE ---
+  // --- DISPARADORES DE ANIMACIÓN SEGUROS ---
   const walkKey = this.mario.isBig ? 'jaiba-big-walk' : 'jaiba-walk'
   const idleKey = this.mario.isBig ? 'jaiba-big-idle' : 'jaiba-idle'
 
   if (this.keys.left.isDown) {
     this.mario.setVelocityX(-120) 
-    this.mario.anims.play(walkKey, true) // Activa la animación al caminar
+    this.mario.anims.play(walkKey, true) 
     this.mario.flipX = true
   } else if (this.keys.right.isDown) {
     this.mario.setVelocityX(120)  
-    this.mario.anims.play(walkKey, true) // Activa la animación al caminar
+    this.mario.anims.play(walkKey, true) 
     this.mario.flipX = false
   } else {
     this.mario.setVelocityX(0)     
-    this.mario.anims.play(idleKey, true) // Se queda quieto viendo al frente
+    this.mario.anims.play(idleKey, true) 
   }
 
   if (this.keys.up.isDown && this.mario.body.touching.down) {
