@@ -30,11 +30,15 @@ function preload () {
   this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png')
   this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png')
 
-  // Mantenemos tus medidas del archivo 1298x1212
-   this.load.spritesheet(
+  // --- CORRECCIÓN DE ASSETS CON TUS NOMBRES REALES ---
+  this.load.image('mysteryBox', 'assets/scenery/overworld/floorbricks.png')
+  this.load.image('mushroom', 'assets/entities/super-mushroom.png') // Ruta apuntando a tu hongo
+
+  // Mantenemos tus medidas del archivo 1744x902 (Opción 1)
+  this.load.spritesheet(
     'mario', 
     'assets/entities/mario.png',
-    { frameWidth: 290, frameHeight: 902 } // <-- Medidas exactas para la Opción 1
+    { frameWidth: 290, frameHeight: 902 } 
   )
 
   this.load.audio('gameover', 'assets/sound/music/gameover.mp3')
@@ -70,27 +74,29 @@ function create () {
   this.floor.create(916, config.height - 32, 'floorbricks').setOrigin(0, 0.5).refreshBody()
   this.floor.create(916, config.height - 48, 'floorbricks').setOrigin(0, 0.5).refreshBody()
 
-  // --- NUEVA CONFIGURACIÓN FIJA DE LA JAIBA ---
-// Hacemos el personaje más grande (lo dejamos en 0.12 como querías)
+  // --- SISTEMA DE MYSTERY BOX Y GRUPO DE HONGOS ---
+  this.mysteryBoxes = this.physics.add.staticGroup()
+  const box = this.mysteryBoxes.create(320, config.height - 90, 'mysteryBox').setOrigin(0, 0.5).refreshBody()
+  box.hasItem = true 
+
+  this.mushrooms = this.physics.add.group()
+
+  // --- CONFIGURACIÓN DE LA JAIBA ---
+  // Empieza pequeña (0.05) para poder probar el crecimiento
   this.mario = this.physics.add.sprite(50, 100, 'mario')
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
     .setGravityY(300)
-    .setScale(0.12) 
+    .setScale(0.05) 
 
-  // --- EL AJUSTE PARA LAS PAREDES ---
-  // Subimos el ancho de la caja a 240 (antes estaba en 160) para que proteja los lados.
-  // Ajustamos el alto a 260 para que cubra bien de pies a cabeza.
-  this.mario.body.setSize(240, 260)
-  
-  // Modificamos el desfase horizontal (el primer número) a 25 para centrar la nueva caja ancha.
-  // Mantenemos el vertical cerca de 300 o 310 para que no flote ni se hunda.
-  this.mario.body.setOffset(25, 305)
+  // Ajuste inicial de la caja rosa (Tamaño Pequeño)
+  this.mario.body.setSize(180, 400)
+  this.mario.body.setOffset(55, 450)
+  this.mario.isBig = false 
   
   // --- ANIMACIONES ---
- this.anims.create({
+  this.anims.create({
     key: 'jaiba-walk',
-    // Usamos los cuadros del 1 al 3 para la caminata fluida
     frames: this.anims.generateFrameNumbers('mario', { start: 1, end: 3 }),
     frameRate: 10,
     repeat: -1
@@ -98,11 +104,44 @@ function create () {
 
   this.anims.create({
     key: 'jaiba-idle',
-    frames: [{ key: 'mario', frame: 0 }] // Cuadro 0 cuando esté quieta
+    frames: [{ key: 'mario', frame: 0 }] 
   })
 
   this.physics.world.setBounds(0, 0, 2000, config.height)
+  
+  // Colisiones bases
   this.physics.add.collider(this.mario, this.floor)
+  this.physics.add.collider(this.mushrooms, this.floor)
+
+  // --- COLISIÓN PARA GOLPEAR LA CAJA DESDE ABAJO ---
+  this.physics.add.collider(this.mario, this.mysteryBoxes, (mario, boxHit) => {
+    if (mario.body.touching.up && boxHit.hasItem) {
+      boxHit.hasItem = false
+      boxHit.setTint(0x555555) 
+
+      // Aparece tu super-mushroom.png real arriba de la caja
+      const mushroom = this.mushrooms.create(boxHit.x + 8, boxHit.y - 20, 'mushroom')
+      mushroom.setOrigin(0.5, 0.5)
+      mushroom.setScale(1) // Escala normal para tu sprite del hongo
+      mushroom.setVelocityX(60) 
+    }
+  })
+
+  // --- COLISIÓN PARA VOLVERSE GRANDE ---
+  this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
+    mushroomHit.destroy() 
+
+    if (!mario.isBig) {
+      mario.isBig = true
+      
+      // Cambia al tamaño grande que elegiste (0.12)
+      mario.setScale(0.12)
+      
+      // Tu ajuste perfecto anti-paredes para la jaiba grande
+      mario.body.setSize(240, 260)
+      mario.body.setOffset(25, 305)
+    }
+  })
 
   this.cameras.main.setBounds(0, 0, 2000, config.height)
   this.cameras.main.startFollow(this.mario)
@@ -113,21 +152,20 @@ function create () {
 function update () {
   if (this.mario.isDead) return
 
- // --- MOVIMIENTO CON VELOCIDAD FÍSICA (Corrige el traspaso de paredes) ---
+  // --- MOVIMIENTO CON VELOCIDAD FÍSICA ---
   if (this.keys.left.isDown) {
-    this.mario.setVelocityX(-120) // Mueve con física hacia la izquierda
+    this.mario.setVelocityX(-120) 
     this.mario.anims.play('jaiba-walk', true)
     this.mario.flipX = true
   } else if (this.keys.right.isDown) {
-    this.mario.setVelocityX(120)  // Mueve con física hacia la derecha
+    this.mario.setVelocityX(120)  
     this.mario.anims.play('jaiba-walk', true)
     this.mario.flipX = false
   } else {
-    this.mario.setVelocityX(0)     // Se detiene en seco al soltar la tecla
+    this.mario.setVelocityX(0)     
     this.mario.anims.play('jaiba-idle', true)
   }
 
-  // Al estar la caja bien apoyada, este condicional volverá a dejarte saltar
   if (this.keys.up.isDown && this.mario.body.touching.down) {
     this.mario.setVelocityY(-285)
   }
