@@ -71,18 +71,21 @@ function create () {
   this.floor.create(916, config.height - 48, 'floorbricks').setOrigin(0, 0.5).refreshBody()
 
   // --- NUEVA CONFIGURACIÓN FIJA DE LA JAIBA ---
-  // Cambiamos el origen a (0.5, 1) para que el eje del personaje esté en la planta de sus pies
- this.mario = this.physics.add.sprite(50, 100, 'mario')
+// Hacemos el personaje más grande (lo dejamos en 0.12 como querías)
+  this.mario = this.physics.add.sprite(50, 100, 'mario')
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
     .setGravityY(300)
-    .setScale(0.12) // Ajustamos escala por la nueva resolución
+    .setScale(0.12) 
 
- // Mantenemos este tamaño de caja que ya viste que toca el suelo bien
-  this.mario.body.setSize(160, 220)
+  // --- EL AJUSTE PARA LAS PAREDES ---
+  // Subimos el ancho de la caja a 240 (antes estaba en 160) para que proteja los lados.
+  // Ajustamos el alto a 260 para que cubra bien de pies a cabeza.
+  this.mario.body.setSize(240, 260)
   
-  // Aumentamos el offset vertical para empujar el dibujo de la jaiba hacia abajo
-  this.mario.body.setOffset(65, 300)
+  // Modificamos el desfase horizontal (el primer número) a 25 para centrar la nueva caja ancha.
+  // Mantenemos el vertical cerca de 300 o 310 para que no flote ni se hunda.
+  this.mario.body.setOffset(25, 305)
   
   // --- ANIMACIONES ---
  this.anims.create({
