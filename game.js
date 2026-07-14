@@ -128,7 +128,7 @@ function create () {
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
     .setGravityY(300)
-    .setScale(0.04) 
+    .setScale(0.1) 
 
   // Caja limpia inicial
   this.mario.body.setSize(240, 500)
@@ -178,7 +178,7 @@ function create () {
         mario.body.allowGravity = true 
         
         mario.setTexture('mario-grow')
-        mario.setScale(0.08) 
+        mario.setScale(0.15) 
         
         // REPOSICIONAMIENTO SEGURO: Empuja al jugador hacia arriba para que no lo absorba el piso
         mario.y -= 25 
