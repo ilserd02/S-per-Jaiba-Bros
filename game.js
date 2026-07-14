@@ -128,7 +128,7 @@ function create () {
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
     .setGravityY(300)
-    .setScale(0.1) 
+    .setScale(0.12) 
 
   // Caja limpia inicial
   this.mario.body.setSize(240, 500)
@@ -169,7 +169,7 @@ function create () {
       mario.body.allowGravity = false 
       
       mario.setTexture('jaiba-eating')
-      mario.setScale(0.04) 
+      mario.setScale(0.12) 
       mario.anims.play('jaiba-eat-mushroom')
 
       mario.once('animationcomplete-jaiba-eat-mushroom', () => {
@@ -178,7 +178,7 @@ function create () {
         mario.body.allowGravity = true 
         
         mario.setTexture('mario-grow')
-        mario.setScale(0.15) 
+        mario.setScale(0.18) 
         
         // REPOSICIONAMIENTO SEGURO: Empuja al jugador hacia arriba para que no lo absorba el piso
         mario.y -= 25 
