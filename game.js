@@ -14,7 +14,7 @@ const config = {
     default: 'arcade',
     arcade: {
       gravity: { y: 300 },
-      debug: true // Muestra las cajas rosas de colisión para ajustar saltos
+      debug: true // Muestra los recuadros de colisión
     }
   },
   scene: {
@@ -30,15 +30,15 @@ function preload () {
   this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png')
   this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png')
 
-  // --- BLOQUES Y ELEMENTOS ---
-  this.load.image('mysteryBox', 'assets/scenery/overworld/misteryBlock.png')
-  this.load.image('emptyBox', 'assets/scenery/overworld/emptyBlock.png')
-  this.load.image('mushroom', 'assets/collectibles/super-mushroom.png') // Ruta corregida
+  // --- BLOQUES Y ELEMENTOS (RUTAS CORREGIDAS SIN 'OVERWORLD') ---
+  this.load.image('mysteryBox', 'assets/scenery/misteryBlock.png') // Corregido para evitar 404
+  this.load.image('emptyBox', 'assets/scenery/emptyBlock.png')     // Corregido para evitar 404
+  this.load.image('mushroom', 'assets/collectibles/super-mushroom.png') 
 
-  // --- TUBERÍAS (RUTAS CORREGIDAS EXACTAS) ---
-  this.load.image('tube-small', 'assets/scenery/vertical-small-tube.png') // Ruta corregida
-  this.load.image('tube-medium', 'assets/scenery/vertical-large-tube.png') // Ruta corregida
-  this.load.image('tube-large', 'assets/scenery/vertical-large-tube.png') // Ruta corregida
+  // --- TUBERÍAS ---
+  this.load.image('tube-small', 'assets/scenery/vertical-small-tube.png') 
+  this.load.image('tube-medium', 'assets/scenery/vertical-large-tube.png') 
+  this.load.image('tube-large', 'assets/scenery/vertical-large-tube.png') 
 
   // --- SPRITES DEL JUGADOR ---
   this.load.spritesheet(
@@ -55,8 +55,8 @@ function preload () {
   // --- ENEMIGO GOOMBA ---
   this.load.spritesheet(
     'goomba',
-    'assets/entities/overworld/goomba.png', // Ruta corregida
-    { frameWidth: 16, frameHeight: 16 } // Tamaño estándar del sprite de Goomba
+    'assets/entities/overworld/goomba.png', 
+    { frameWidth: 16, frameHeight: 16 } 
   )
 
   this.load.audio('gameover', 'assets/sound/music/gameover.mp3')
@@ -73,7 +73,7 @@ function create () {
     this.floor.create(x, config.height - 16, 'floorbricks').setOrigin(0, 0.5).refreshBody()
   }
 
-  // --- BLOQUES FLOTANTES ---
+  // --- BLOQUES FLOTANTES DE ADORNO ---
   const bloquesFlotantes = [
     { x: 200, y: config.height - 80 },
     { x: 216, y: config.height - 80 },
@@ -87,12 +87,12 @@ function create () {
     this.floor.create(bloque.x, bloque.y, 'floorbricks').setOrigin(0, 0.5).refreshBody()
   })
 
-  // --- COLOCACIÓN DE LAS TUBERÍAS ---
+  // --- TUBERÍAS ---
   this.floor.create(500, config.height - 32, 'tube-small').setOrigin(0.5, 0.5).refreshBody()
   this.floor.create(580, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).refreshBody()
   this.floor.create(700, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).refreshBody()
 
-  // --- BLOQUES MISTERIOSOS ---
+  // --- CAJAS MISTERIOSAS (Ya no darán error si el asset carga bien) ---
   this.mysteryBoxes = this.physics.add.staticGroup()
   const box = this.mysteryBoxes.create(320, config.height - 90, 'mysteryBox').setOrigin(0, 0.5).refreshBody()
   box.hasItem = true 
@@ -100,14 +100,13 @@ function create () {
   this.mushrooms = this.physics.add.group()
   this.goombas = this.physics.add.group()
 
-  // --- GENERACIÓN DE GOOMBAS ---
+  // --- GOOMBAS ---
   const goomba1 = this.goombas.create(450, config.height - 30, 'goomba').setOrigin(0.5, 0.5)
-  goomba1.setVelocityX(-40) // Va hacia la izquierda
+  goomba1.setVelocityX(-40)
   
   const goomba2 = this.goombas.create(540, config.height - 30, 'goomba').setOrigin(0.5, 0.5)
-  goomba2.setVelocityX(40)  // Va hacia la derecha
+  goomba2.setVelocityX(40)
 
-  // Animación del Goomba caminando
   this.anims.create({
     key: 'goomba-walk',
     frames: this.anims.generateFrameNumbers('goomba', { start: 0, end: 1 }),
@@ -115,7 +114,7 @@ function create () {
     repeat: -1
   })
 
-  // --- JAIBA PEQUEÑA ---
+  // --- CONFIGURACIÓN JAIBA JUGADOR ---
   this.mario = this.physics.add.sprite(50, 100, 'mario')
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
@@ -150,32 +149,32 @@ function create () {
 
   this.physics.world.setBounds(0, 0, 2000, config.height)
   
-  // Colisiones físicas estables
+  // Colisiones básicas
   this.physics.add.collider(this.mario, this.floor)
   this.physics.add.collider(this.mushrooms, this.floor)
   
-  // Los goombas caminan y rebotan al tocar tubos o bordes
   this.physics.add.collider(this.goombas, this.floor, (goombaObj) => {
     if (goombaObj.body.blocked.left || goombaObj.body.blocked.right) {
       goombaObj.setVelocityX(goombaObj.body.velocity.x * -1)
     }
   })
 
-  // --- GOLPEAR MISTERY BLOCK -> EMPTY BLOCK ---
+  // --- LÓGICA DEL BLOQUE MISTERIOSO AL COCHAL POR DEBAJO ---
   this.physics.add.collider(this.mario, this.mysteryBoxes, (mario, boxHit) => {
     if (mario.body.touching.up && boxHit.hasItem) {
       boxHit.hasItem = false
-      boxHit.setTexture('emptyBox') // Se transforma en el bloque vacío
+      boxHit.setTexture('emptyBox') // Se convierte en bloque metálico vacío
       boxHit.refreshBody()
 
+      // Hace aparecer el Hongo Coleccionable justo encima
       const mushroom = this.mushrooms.create(boxHit.x + 8, boxHit.y - 20, 'mushroom')
       mushroom.setOrigin(0.5, 0.5)
       mushroom.setScale(1) 
-      mushroom.setVelocityX(60) 
+      mushroom.setVelocityX(60) // Empieza a avanzar solo
     }
   })
 
-  // --- RECOLECTAR HONGO Y CAMBIAR DE TAMAÑO ---
+  // --- CAMBIAR A JAIBA GRANDE ---
   this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
     mushroomHit.destroy() 
     if (!mario.isBig) {
@@ -187,14 +186,13 @@ function create () {
     }
   })
 
-  // --- COMBATE CONTRA GOOMBAS ---
+  // --- ATAQUES CONTRA GOOMBAS ---
   this.physics.add.collider(this.mario, this.goombas, (mario, goombaHit) => {
-    // Si saltas sobre él desde arriba...
     if (mario.body.touching.down && goombaHit.body.touching.up) {
-      mario.setVelocityY(-180) // Impulso hacia arriba
+      mario.setVelocityY(-180)
       goombaHit.setVelocityX(0)
       goombaHit.body.enable = false
-      goombaHit.setFrame(2) // Frame aplastado
+      goombaHit.setFrame(2) // Frame chato de Goomba aplastado
 
       this.tweens.add({
         targets: goombaHit,
@@ -203,14 +201,13 @@ function create () {
         onComplete: () => { goombaHit.destroy() }
       })
     } else {
-      // Si te golpea por los lados
       if (mario.isBig) {
         mario.isBig = false
         mario.setTexture('mario')
         mario.setScale(0.05)
         mario.body.setSize(180, 400)
         mario.body.setOffset(55, 450)
-        goombaHit.setVelocityX(goombaHit.body.velocity.x * -1) // Rebota al dañarte
+        goombaHit.setVelocityX(goombaHit.body.velocity.x * -1)
       } else {
         mario.isDead = true
         mario.setVelocity(0, -300)
@@ -226,7 +223,6 @@ function create () {
 
   this.keys = this.input.keyboard.createCursorKeys()
 
-  // Bloqueo de desplazamiento para las flechas
   this.input.keyboard.addCapture([
     Phaser.Input.Keyboard.KeyCodes.UP,
     Phaser.Input.Keyboard.KeyCodes.DOWN,
@@ -236,7 +232,6 @@ function create () {
 }
 
 function update () {
-  // Mueve las patitas de los goombas activos
   this.goombas.children.iterate(goomba => {
     if (goomba && goomba.body && goomba.body.enable) {
       goomba.anims.play('goomba-walk', true)
@@ -248,7 +243,6 @@ function update () {
   const walkKey = this.mario.isBig ? 'jaiba-big-walk' : 'jaiba-walk'
   const idleKey = this.mario.isBig ? 'jaiba-big-idle' : 'jaiba-idle'
 
-  // --- CONTROLES ---
   if (this.keys.left.isDown) {
     this.mario.setVelocityX(-120) 
     this.mario.anims.play(walkKey, true)
