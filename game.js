@@ -76,16 +76,16 @@ function create () {
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
     .setGravityY(300)
-    .setScale(0.12) 
+    .setScale(0.10) 
 
   // --- EL AJUSTE PARA LAS PAREDES ---
   // Subimos el ancho de la caja a 240 (antes estaba en 160) para que proteja los lados.
   // Ajustamos el alto a 260 para que cubra bien de pies a cabeza.
-  this.mario.body.setSize(240, 260)
+  this.mario.body.setSize(235, 260)
   
   // Modificamos el desfase horizontal (el primer número) a 25 para centrar la nueva caja ancha.
   // Mantenemos el vertical cerca de 300 o 310 para que no flote ni se hunda.
-  this.mario.body.setOffset(25, 305)
+  this.mario.body.setOffset(20, 305)
   
   // --- ANIMACIONES ---
  this.anims.create({
