@@ -31,10 +31,10 @@ function preload () {
   this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png')
 
   // Mantenemos tus medidas del archivo 1298x1212
-  this.load.spritesheet(
+   this.load.spritesheet(
     'mario', 
     'assets/entities/mario.png',
-    { frameWidth: 216, frameHeight: 606 }
+    { frameWidth: 290, frameHeight: 902 } // <-- Medidas exactas para la Opción 1
   )
 
   this.load.audio('gameover', 'assets/sound/music/gameover.mp3')
@@ -72,27 +72,29 @@ function create () {
 
   // --- NUEVA CONFIGURACIÓN FIJA DE LA JAIBA ---
   // Cambiamos el origen a (0.5, 1) para que el eje del personaje esté en la planta de sus pies
-  this.mario = this.physics.add.sprite(50, 100, 'mario')
-    .setOrigin(0.5, 1) 
+ this.mario = this.physics.add.sprite(50, 100, 'mario')
+    .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
     .setGravityY(300)
-    .setScale(0.08)
+    .setScale(0.1) // Ajustamos escala por la nueva resolución
 
-  // Definimos una caja rosa fija para todos los estados que no se moverá de lugar
-  this.mario.body.setSize(160, 240) 
-  this.mario.body.setOffset(28, 330) // Centrada en la base para que pise el suelo
+  // Reducimos la caja para que cubra solo el cuerpo de la jaiba
+  this.mario.body.setSize(180, 400)
+  // Desplazamos la caja hacia abajo para que coincida con sus patas
+  this.mario.body.setOffset(55, 450)
 
   // --- ANIMACIONES ---
-  this.anims.create({
+ this.anims.create({
     key: 'jaiba-walk',
-    frames: this.anims.generateFrameNumbers('mario', { start: 6, end: 9 }),
-    frameRate: 12,
+    // Usamos los cuadros del 1 al 3 para la caminata fluida
+    frames: this.anims.generateFrameNumbers('mario', { start: 1, end: 3 }),
+    frameRate: 10,
     repeat: -1
   })
 
   this.anims.create({
     key: 'jaiba-idle',
-    frames: [{ key: 'mario', frame: 0 }]
+    frames: [{ key: 'mario', frame: 0 }] // Cuadro 0 cuando esté quieta
   })
 
   this.physics.world.setBounds(0, 0, 2000, config.height)
