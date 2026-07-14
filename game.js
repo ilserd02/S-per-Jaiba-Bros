@@ -14,7 +14,7 @@ const config = {
     default: 'arcade',
     arcade: {
       gravity: { y: 300 },
-      debug: true // Para que veas exactamente dónde pisa el cuadro rosa
+      debug: true // Para ver exactamente dónde pisa el cuadro rosa
     }
   },
   scene: {
@@ -30,21 +30,21 @@ function preload () {
   this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png')
   this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png')
 
-  // Assets con tus nombres reales
-  this.load.image('mysteryBox', 'assets/scenery/overworld/floorbricks.png')
+  // --- CORRECCIÓN EXACTA DE TUS ASSETS Y SUS NOMBRES ---
+  this.load.image('mysteryBox', 'assets/scenery/overworld/misteryBlock.png')
   this.load.image('mushroom', 'assets/entities/super-mushroom.png') 
 
-  // Spritesheet de la jaiba pequeña (Opción 1: 1744x902)
+  // Spritesheet de la jaiba pequeña (1744x902)
   this.load.spritesheet(
     'mario', 
     'assets/entities/mario.png',
     { frameWidth: 290, frameHeight: 902 } 
   )
 
-  // Spritesheet de la jaiba grande (1641x959)
+  // Spritesheet de la jaiba grande (1641x959 con sus 6 cuadros)
   this.load.spritesheet(
     'mario-grow', 
-    'assets/entities/mario-grow.png',
+    'assets/entities/mario-grown.png', 
     { frameWidth: 273, frameHeight: 959 } 
   )
 
@@ -81,7 +81,7 @@ function create () {
   this.floor.create(916, config.height - 32, 'floorbricks').setOrigin(0, 0.5).refreshBody()
   this.floor.create(916, config.height - 48, 'floorbricks').setOrigin(0, 0.5).refreshBody()
 
-  // --- MYSTERY BOX Y GRUPO DE HONGOS ---
+  // --- GRUPO DE BLOQUES MISTERIOSOS Y HONGOS ---
   this.mysteryBoxes = this.physics.add.staticGroup()
   const box = this.mysteryBoxes.create(320, config.height - 90, 'mysteryBox').setOrigin(0, 0.5).refreshBody()
   box.hasItem = true 
@@ -95,7 +95,7 @@ function create () {
     .setGravityY(300)
     .setScale(0.05) 
 
-  // Ajuste inicial de la caja rosa (Tamaño Pequeño)
+  // Caja rosa para que la jaiba pequeña pise perfecto
   this.mario.body.setSize(180, 400)
   this.mario.body.setOffset(55, 450)
   this.mario.isBig = false 
@@ -113,7 +113,7 @@ function create () {
     frames: [{ key: 'mario', frame: 0 }] 
   })
 
-  // --- ANIMACIONES JAIBA GRANDE ---
+  // --- ANIMACIONES JAIBA GRANDE (mario-grown) ---
   this.anims.create({
     key: 'jaiba-big-walk',
     frames: this.anims.generateFrameNumbers('mario-grow', { start: 1, end: 3 }),
@@ -132,12 +132,13 @@ function create () {
   this.physics.add.collider(this.mario, this.floor)
   this.physics.add.collider(this.mushrooms, this.floor)
 
-  // --- COLISIÓN GOLPEAR CAJA DESDE ABAJO ---
+  // --- GOLPEAR BLOQUE MISTERIOSO DESDE ABAJO ---
   this.physics.add.collider(this.mario, this.mysteryBoxes, (mario, boxHit) => {
     if (mario.body.touching.up && boxHit.hasItem) {
       boxHit.hasItem = false
-      boxHit.setTint(0x555555) 
+      boxHit.setTint(0x555555) // Se oscurece para indicar que ya se usó
 
+      // El hongo sale disparado limpiamente hacia arriba del bloque
       const mushroom = this.mushrooms.create(boxHit.x + 8, boxHit.y - 20, 'mushroom')
       mushroom.setOrigin(0.5, 0.5)
       mushroom.setScale(1) 
@@ -145,18 +146,18 @@ function create () {
     }
   })
 
-  // --- COLISIÓN OVERLAP PARA VOLVERSE GRANDE ---
+  // --- AL TOCAR EL HONGO CRECE Y CAMBIA DE IMAGEN ---
   this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
     mushroomHit.destroy() 
 
     if (!mario.isBig) {
       mario.isBig = true
       
-      // Cambiamos la textura base al nuevo spritesheet grande
+      // Cambia la textura instantáneamente por la de mario-grown.png
       mario.setTexture('mario-grow')
       mario.setScale(0.12)
       
-      // Caja rosa optimizada para el nuevo archivo de la jaiba grande (anti-paredes)
+      // Tu caja rosa perfecta anti-paredes adaptada a la nueva escala
       mario.body.setSize(240, 260)
       mario.body.setOffset(20, 320)
     }
@@ -167,8 +168,7 @@ function create () {
 
   this.keys = this.input.keyboard.createCursorKeys()
 
-  // --- BLOQUEO DE DESPLAZAMIENTO DEL NAVEGADOR ---
-  // Esto captura las flechas para que no te muevan la barra de la ventana web
+  // --- BLOQUEO TOTAL DE LAS FLECHAS EN EL NAVEGADOR ---
   this.input.keyboard.addCapture([
     Phaser.Input.Keyboard.KeyCodes.UP,
     Phaser.Input.Keyboard.KeyCodes.DOWN,
@@ -180,7 +180,7 @@ function create () {
 function update () {
   if (this.mario.isDead) return
 
-  // Elegimos las llaves de animación correctas dinámicamente según el tamaño
+  // Control dinámico de animaciones dependiendo del tamaño actual
   const walkKey = this.mario.isBig ? 'jaiba-big-walk' : 'jaiba-walk'
   const idleKey = this.mario.isBig ? 'jaiba-big-idle' : 'jaiba-idle'
 
