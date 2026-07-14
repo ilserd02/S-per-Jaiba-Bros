@@ -37,7 +37,7 @@ function preload () {
   this.load.image('tube-large', 'assets/scenery/vertical-large-tube.png') 
 
   // --- CONFIGURACIÓN DE SPRITESHEETS ---
-  this.load.spritesheet('mario', 'assets/entities/mario.png', { frameWidth: 273, frameHeight: 547 }) 
+  this.load.spritesheet('mario', 'assets/entities/mario.png', { frameWidth: 265, frameHeight: 525 }) 
   this.load.spritesheet('mario-grow', 'assets/entities/mario-grown.png', { frameWidth: 273, frameHeight: 547 }) 
   this.load.spritesheet('jaiba-eating', 'assets/entities/mario-eat.png', { frameWidth: 256, frameHeight: 1024 })
 
