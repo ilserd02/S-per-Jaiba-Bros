@@ -81,11 +81,11 @@ function create () {
   // --- EL AJUSTE PARA LAS PAREDES ---
   // Subimos el ancho de la caja a 240 (antes estaba en 160) para que proteja los lados.
   // Ajustamos el alto a 260 para que cubra bien de pies a cabeza.
-  this.mario.body.setSize(235, 260)
+  this.mario.body.setSize(231, 260)
   
   // Modificamos el desfase horizontal (el primer número) a 25 para centrar la nueva caja ancha.
   // Mantenemos el vertical cerca de 300 o 310 para que no flote ni se hunda.
-  this.mario.body.setOffset(20, 305)
+  this.mario.body.setOffset(18, 305)
   
   // --- ANIMACIONES ---
  this.anims.create({
