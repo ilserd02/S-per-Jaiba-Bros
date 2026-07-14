@@ -2,8 +2,6 @@
 
 import { createAnimations } from "./animations.js"
 
-/* global Phaser */
-
 const config = {
   type: Phaser.AUTO,
   width: 256,
@@ -14,7 +12,7 @@ const config = {
     default: 'arcade',
     arcade: {
       gravity: { y: 300 },
-      debug: true // Muestra los recuadros de colisión
+      debug: true // Muestra las cajas de colisión para ajustar saltos
     }
   },
   scene: {
@@ -30,27 +28,19 @@ function preload () {
   this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png')
   this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png')
 
-  // --- BLOQUES Y ELEMENTOS (RUTAS CORREGIDAS SIN 'OVERWORLD') ---
-  this.load.image('mysteryBox', 'assets/scenery/misteryBlock.png') // Corregido para evitar 404
-  this.load.image('emptyBox', 'assets/scenery/emptyBlock.png')     // Corregido para evitar 404
-  this.load.image('mushroom', 'assets/collectibles/super-mushroom.png') 
+  // --- BLOQUES Y ELEMENTOS (RUTAS CORREGIDAS SEGÚN TU GITHUB) ---
+  this.load.image('mysteryBox', 'assets/blocks/overworld/misteryBlock.png') // Corregido carpeta 'blocks'
+  this.load.image('emptyBox', 'assets/blocks/overworld/emptyBlock.png')     // Corregido carpeta 'blocks'
+  this.load.image('mushroom', 'assets/collectibles/super-mushroom.png')   // Ruta correcta del hongo
 
   // --- TUBERÍAS ---
   this.load.image('tube-small', 'assets/scenery/vertical-small-tube.png') 
   this.load.image('tube-medium', 'assets/scenery/vertical-large-tube.png') 
   this.load.image('tube-large', 'assets/scenery/vertical-large-tube.png') 
 
-  // --- SPRITES DEL JUGADOR ---
-  this.load.spritesheet(
-    'mario', 
-    'assets/entities/mario.png',
-    { frameWidth: 290, frameHeight: 902 } 
-  )
-  this.load.spritesheet(
-    'mario-grow', 
-    'assets/entities/mario-grown.png', 
-    { frameWidth: 273, frameHeight: 959 } 
-  )
+  // --- SPRITES DEL JUGADOR (Carga básica como imagen fija para evitar errores 404 de hojas de sprites) ---
+  this.load.image('mario', 'assets/entities/mario.png')
+  this.load.image('mario-grow', 'assets/entities/mario-grown.png') 
 
   // --- ENEMIGO GOOMBA ---
   this.load.spritesheet(
@@ -67,7 +57,7 @@ function create () {
 
   this.floor = this.physics.add.staticGroup()
 
-  // --- SUELO ---
+  // --- GENERACIÓN DEL SUELO ---
   for (let x = 0; x < 2000; x += 16) {
     if (x >= 600 && x <= 680) continue
     this.floor.create(x, config.height - 16, 'floorbricks').setOrigin(0, 0.5).refreshBody()
@@ -92,7 +82,7 @@ function create () {
   this.floor.create(580, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).refreshBody()
   this.floor.create(700, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).refreshBody()
 
-  // --- CAJAS MISTERIOSAS (Ya no darán error si el asset carga bien) ---
+  // --- CAJA MISTERIOSA ACTIVA ---
   this.mysteryBoxes = this.physics.add.staticGroup()
   const box = this.mysteryBoxes.create(320, config.height - 90, 'mysteryBox').setOrigin(0, 0.5).refreshBody()
   box.hasItem = true 
@@ -100,12 +90,9 @@ function create () {
   this.mushrooms = this.physics.add.group()
   this.goombas = this.physics.add.group()
 
-  // --- GOOMBAS ---
+  // --- CONFIGURACIÓN GOOMBAS ---
   const goomba1 = this.goombas.create(450, config.height - 30, 'goomba').setOrigin(0.5, 0.5)
   goomba1.setVelocityX(-40)
-  
-  const goomba2 = this.goombas.create(540, config.height - 30, 'goomba').setOrigin(0.5, 0.5)
-  goomba2.setVelocityX(40)
 
   this.anims.create({
     key: 'goomba-walk',
@@ -114,7 +101,7 @@ function create () {
     repeat: -1
   })
 
-  // --- CONFIGURACIÓN JAIBA JUGADOR ---
+  // --- MARIO / JAIBA CONFIGURACIÓN ---
   this.mario = this.physics.add.sprite(50, 100, 'mario')
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
@@ -124,32 +111,10 @@ function create () {
   this.mario.body.setSize(180, 400)
   this.mario.body.setOffset(55, 450)
   this.mario.isBig = false 
-  
-  // --- ANIMACIONES JUGADOR ---
-  this.anims.create({
-    key: 'jaiba-walk',
-    frames: this.anims.generateFrameNumbers('mario', { start: 1, end: 3 }),
-    frameRate: 10,
-    repeat: -1
-  })
-  this.anims.create({
-    key: 'jaiba-idle',
-    frames: [{ key: 'mario', frame: 0 }] 
-  })
-  this.anims.create({
-    key: 'jaiba-big-walk',
-    frames: this.anims.generateFrameNumbers('mario-grow', { start: 1, end: 3 }),
-    frameRate: 10,
-    repeat: -1
-  })
-  this.anims.create({
-    key: 'jaiba-big-idle',
-    frames: [{ key: 'mario-grow', frame: 0 }] 
-  })
 
   this.physics.world.setBounds(0, 0, 2000, config.height)
   
-  // Colisiones básicas
+  // Colisiones físicas básicas
   this.physics.add.collider(this.mario, this.floor)
   this.physics.add.collider(this.mushrooms, this.floor)
   
@@ -159,40 +124,47 @@ function create () {
     }
   })
 
-  // --- LÓGICA DEL BLOQUE MISTERIOSO AL COCHAL POR DEBAJO ---
+  // --- LÓGICA GOLPEAR BLOQUE MISTERIOSO ---
   this.physics.add.collider(this.mario, this.mysteryBoxes, (mario, boxHit) => {
     if (mario.body.touching.up && boxHit.hasItem) {
       boxHit.hasItem = false
-      boxHit.setTexture('emptyBox') // Se convierte en bloque metálico vacío
+      
+      // Cambia la textura a bloque vacío
+      if (this.textures.exists('emptyBox')) {
+        boxHit.setTexture('emptyBox')
+      } else {
+        boxHit.setTint(0x555555) // Respaldo visual oscuro si no encuentra el archivo
+      }
       boxHit.refreshBody()
 
-      // Hace aparecer el Hongo Coleccionable justo encima
+      // Hace brotar el Champiñón desde arriba del bloque
       const mushroom = this.mushrooms.create(boxHit.x + 8, boxHit.y - 20, 'mushroom')
       mushroom.setOrigin(0.5, 0.5)
       mushroom.setScale(1) 
-      mushroom.setVelocityX(60) // Empieza a avanzar solo
+      mushroom.setVelocityX(60) 
     }
   })
 
-  // --- CAMBIAR A JAIBA GRANDE ---
+  // --- RECOGER HONGO Y CRECER ---
   this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
     mushroomHit.destroy() 
     if (!mario.isBig) {
       mario.isBig = true
-      mario.setTexture('mario-grow')
+      mario.setTexture('mario-grow') // Cambia al sprite grande
       mario.setScale(0.12)
       mario.body.setSize(240, 260)
       mario.body.setOffset(20, 320)
     }
   })
 
-  // --- ATAQUES CONTRA GOOMBAS ---
+  // --- INTERACCIÓN CON LOS GOOMBAS ---
   this.physics.add.collider(this.mario, this.goombas, (mario, goombaHit) => {
+    // Si saltas encima del Goomba
     if (mario.body.touching.down && goombaHit.body.touching.up) {
-      mario.setVelocityY(-180)
+      mario.setVelocityY(-180) 
       goombaHit.setVelocityX(0)
       goombaHit.body.enable = false
-      goombaHit.setFrame(2) // Frame chato de Goomba aplastado
+      goombaHit.setFrame(2) // Frame aplastado
 
       this.tweens.add({
         targets: goombaHit,
@@ -201,13 +173,14 @@ function create () {
         onComplete: () => { goombaHit.destroy() }
       })
     } else {
+      // Si te choca por los lados
       if (mario.isBig) {
         mario.isBig = false
-        mario.setTexture('mario')
+        mario.setTexture('mario') // Vuelve a ser pequeño
         mario.setScale(0.05)
         mario.body.setSize(180, 400)
         mario.body.setOffset(55, 450)
-        goombaHit.setVelocityX(goombaHit.body.velocity.x * -1)
+        goombaHit.setVelocityX(goombaHit.body.velocity.x * -1) // El enemigo rebota
       } else {
         mario.isDead = true
         mario.setVelocity(0, -300)
@@ -240,26 +213,23 @@ function update () {
 
   if (this.mario.isDead) return
 
-  const walkKey = this.mario.isBig ? 'jaiba-big-walk' : 'jaiba-walk'
-  const idleKey = this.mario.isBig ? 'jaiba-big-idle' : 'jaiba-idle'
-
+  // --- CONTROLES DE MOVIMIENTO ---
   if (this.keys.left.isDown) {
     this.mario.setVelocityX(-120) 
-    this.mario.anims.play(walkKey, true)
     this.mario.flipX = true
   } else if (this.keys.right.isDown) {
     this.mario.setVelocityX(120)  
-    this.mario.anims.play(walkKey, true)
     this.mario.flipX = false
   } else {
     this.mario.setVelocityX(0)     
-    this.mario.anims.play(idleKey, true)
   }
 
+  // Saltar
   if (this.keys.up.isDown && this.mario.body.touching.down) {
     this.mario.setVelocityY(-285)
   }
 
+  // Caída al vacío
   if (this.mario.y >= config.height) {
     this.mario.isDead = true
     this.mario.setCollideWorldBounds(false)
