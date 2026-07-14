@@ -27,7 +27,8 @@ function preload () {
   this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png')
 
   // --- BLOQUES Y ELEMENTOS ---
-  this.load.image('mysteryBox', 'assets/blocks/overworld/misteryBlock.png')
+  // Se carga la caja misteriosa como spritesheet de 3 frames (16x16 cada uno) para poder animarla
+  this.load.spritesheet('mysteryBox', 'assets/blocks/overworld/misteryBlock.png', { frameWidth: 16, frameHeight: 16 })
   this.load.image('emptyBox', 'assets/blocks/overworld/emptyBlock.png')     
   this.load.image('mushroom', 'assets/collectibles/super-mushroom.png')
 
@@ -36,13 +37,9 @@ function preload () {
   this.load.image('tube-medium', 'assets/scenery/vertical-large-tube.png') 
   this.load.image('tube-large', 'assets/scenery/vertical-large-tube.png') 
 
-  // --- CONFIGURACIÓN DE SPRITESHEETS INDEPENDIENTES ---
-  // Jaiba normal (Caminando): Ajustada a su altura nativa real para evitar error de frames en cero
+  // --- CONFIGURACIÓN DE SPRITESHEETS ---
   this.load.spritesheet('mario', 'assets/entities/mario.png', { frameWidth: 273, frameHeight: 547 }) 
   this.load.spritesheet('mario-grow', 'assets/entities/mario-grown.png', { frameWidth: 273, frameHeight: 547 }) 
-
-  // CORREGIDO: Apunta al archivo real 'mario-eat.png' que subiste a GitHub
-  // Mantiene la división de 1536 de ancho entre 6 fotogramas = 256px
   this.load.spritesheet('jaiba-eating', 'assets/entities/mario-eat.png', { frameWidth: 256, frameHeight: 1024 })
 
   // --- ENEMIGO GOOMBA ---
@@ -67,10 +64,19 @@ function create () {
   this.floor.create(580, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).refreshBody()
   this.floor.create(700, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).refreshBody()
 
-  // --- CAJA MISTERIOSA Y ENEMIGOS ---
-  this.mysteryBoxes = this.physics.add.staticGroup()
+  // --- ANIMACIÓN DE LA CAJA MISTERIOSA (Cambia de color en bucle) ---
+  this.anims.create({
+    key: 'box-shine',
+    frames: this.anims.generateFrameNumbers('mysteryBox', { start: 0, end: 2 }),
+    frameRate: 6,
+    repeat: -1
+  })
+
+  // --- CREACIÓN DE LA CAJA COMO OBJETO SÓLIDO Y ANIMADO ---
+  this.mysteryBoxes = this.physics.add.staticGroup() // Sólido para colisiones
   const box = this.mysteryBoxes.create(80, config.height - 90, 'mysteryBox').setOrigin(0, 0.5).refreshBody()
   box.hasItem = true 
+  box.anims.play('box-shine', true) // Inicia su ciclo de animación visual
 
   this.mushrooms = this.physics.add.group()
   this.goombas = this.physics.add.group()
@@ -86,7 +92,7 @@ function create () {
     repeat: -1
   })
 
-  // --- CREACIÓN DE ANIMACIONES PARA LA JAIBA ---
+  // --- ANIMACIONES DE LA JAIBA ---
   this.anims.create({
     key: 'jaiba-walk',
     frames: this.anims.generateFrameNumbers('mario', { start: 1, end: 3 }),
@@ -111,7 +117,6 @@ function create () {
     frames: [{ key: 'mario-grow', frame: 0 }]
   })
 
-  // Animación de comer (Usa secuencialmente los 6 fotogramas de la imagen nueva)
   this.anims.create({
     key: 'jaiba-eat-mushroom',
     frames: this.anims.generateFrameNumbers('jaiba-eating', { start: 0, end: 5 }),
@@ -126,29 +131,25 @@ function create () {
     .setGravityY(300)
     .setScale(0.04) 
 
-  // Caja de colisión adaptada a la jaiba normal
-  this.mario.body.setSize(220, 240)
-  this.mario.body.setOffset(25, 280)
+  // Caja de colisión inicial ajustada
+  this.mario.body.setSize(220, 480)
+  this.mario.body.setOffset(25, 40)
   
   this.mario.isBig = false 
-  this.mario.isEating = false // Variable de control para pausar movimientos al comer
+  this.mario.isEating = false 
 
   this.physics.world.setBounds(0, 0, 2000, config.height)
   
   this.physics.add.collider(this.mario, this.floor)
   this.physics.add.collider(this.mushrooms, this.floor)
-  
-  this.physics.add.collider(this.goombas, this.floor, (goombaObj) => {
-    if (goombaObj.body.blocked.left || goombaObj.body.blocked.right) {
-      goombaObj.setVelocityX(goombaObj.body.velocity.x * -1)
-    }
-  })
+  this.physics.add.collider(this.goombas, this.floor)
 
-  // Golpear bloque misterioso
+  // Golpear bloque misterioso sólido
   this.physics.add.collider(this.mario, this.mysteryBoxes, (mario, boxHit) => {
     if (mario.body.touching.up && boxHit.hasItem) {
       boxHit.hasItem = false
-      boxHit.setTexture('emptyBox')
+      boxHit.anims.stop() // Detiene la animación de destellos
+      boxHit.setTexture('emptyBox') // Cambia al sprite estático vacío
       boxHit.refreshBody()
 
       const mushroom = this.mushrooms.create(boxHit.x + 8, boxHit.y - 18, 'mushroom')
@@ -157,7 +158,7 @@ function create () {
     }
   })
 
-  // --- LÓGICA DE ALIMENTACIÓN CON ANIMACIÓN CINEMÁTICA ---
+  // --- LÓGICA DE ALIMENTACIÓN CORREGIDA (JAIBAS SIN HUNDIRSE) ---
   this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
     if (mario.isEating) return 
     
@@ -165,31 +166,32 @@ function create () {
     
     if (!mario.isBig) {
       mario.isEating = true
-      mario.setVelocity(0, 0) // Detiene el avance físico
-      mario.body.allowGravity = false // Lo mantiene flotando/congelado momentáneamente
+      mario.setVelocity(0, 0)
+      mario.body.allowGravity = false 
       
-      // Cambiamos a la textura de comer y adaptamos la escala debido a los 1024px de alto
       mario.setTexture('jaiba-eating')
       mario.setScale(0.04) 
+      mario.body.setOffset(25, 10) 
       mario.anims.play('jaiba-eat-mushroom')
 
-      // Al finalizar la secuencia completa de 6 cuadros, pasa al estado grande
       mario.once('animationcomplete-jaiba-eat-mushroom', () => {
         mario.isBig = true
         mario.isEating = false
         mario.body.allowGravity = true 
         
         mario.setTexture('mario-grow')
-        mario.setScale(0.08) // Escala definitiva de Jaiba Grande
-        mario.body.setSize(240, 260)
-        mario.body.setOffset(20, 260)
+        mario.setScale(0.08) 
+        
+        // CORRECCIÓN FÍSICA CLAVE: Ajuste exacto para mantenerse firme sobre el suelo
+        mario.body.setSize(220, 500)
+        mario.body.setOffset(25, 20) 
       })
     }
   })
 
   // Interacción Goombas
   this.physics.add.collider(this.mario, this.goombas, (mario, goombaHit) => {
-    if (mario.isEating) return // Invulnerable mientras reproduce la cinemática de comer
+    if (mario.isEating) return 
     
     if (mario.body.touching.down && goombaHit.body.touching.up) {
       mario.setVelocityY(-180) 
@@ -208,14 +210,12 @@ function create () {
         mario.isBig = false
         mario.setTexture('mario') 
         mario.setScale(0.04)
-        mario.body.setSize(220, 240)
-        mario.body.setOffset(25, 280)
-        goombaHit.setVelocityX(goombaHit.body.velocity.x * -1) 
+        mario.body.setSize(220, 480)
+        mario.body.setOffset(25, 40)
       } else {
         mario.isDead = true
         mario.setVelocity(0, -300)
         mario.setCollideWorldBounds(false)
-        try { this.sound.add('gameover', { volume: 0.2 }).play() } catch(e){}
         setTimeout(() => this.scene.restart(), 2000)
       }
     }
@@ -234,7 +234,6 @@ function update () {
     }
   })
 
-  // Bloquea los controles si está muerto o reproduciendo la animación de alimentación
   if (this.mario.isDead || this.mario.isEating) return
 
   const walkKey = this.mario.isBig ? 'jaiba-big-walk' : 'jaiba-walk'
@@ -260,7 +259,7 @@ function update () {
   if (this.mario.y >= config.height) {
     this.mario.isDead = true
     this.mario.setCollideWorldBounds(false)
-    try { this.sound.add('gameover', { volume: 0.2 }).play() } catch(e){}
     setTimeout(() => { this.scene.restart() }, 2000)
   }
 }
+
