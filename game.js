@@ -11,8 +11,8 @@ class TitleScene extends Phaser.Scene {
     this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png');
     this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png');
     
-    // Corregimos la ruta al letrero oficial y le agregamos "?v=2" para romper la caché
-    this.load.image('letrero', 'assets/scenery/letrero.png?v=2');
+    // Ruta al letrero oficial con anti-caché
+    this.load.image('letrero', 'assets/scenery/letrero.png?v=3'); 
 
     // Bloques e Items
     this.load.spritesheet('mysteryBox', 'assets/blocks/overworld/misteryBlock.png', { frameWidth: 16, frameHeight: 16 });
@@ -21,7 +21,7 @@ class TitleScene extends Phaser.Scene {
     this.load.spritesheet('mario', 'assets/entities/mario.png', { frameWidth: 273, frameHeight: 547 });
     this.load.spritesheet('goomba', 'assets/entities/overworld/goomba.png', { frameWidth: 16, frameHeight: 16 });
 
-    // Música de fondo (Revisa si la ruta es correcta, si no, puedes comentarla temporalmente)
+    // Música de fondo
     this.load.audio('theme', 'assets/sound/music/overworld.mp3');
   }
 
@@ -81,7 +81,7 @@ class TitleScene extends Phaser.Scene {
     const rightBox = this.add.sprite(220, 95, 'mysteryBox').setDepth(3);
     rightBox.anims.play('box-shine-title', true);
 
-    // 6. Jaiba con origen en la base de sus patas (setOrigin 0.5, 1) y en capa superior
+    // 6. Jaiba posicionada en el suelo
     const titleJaiba = this.add.sprite(45, height - 16, 'mario')
       .setOrigin(0.5, 1) 
       .setScale(0.131)
@@ -100,8 +100,11 @@ class TitleScene extends Phaser.Scene {
     const titleGoomba = this.add.sprite(215, height - 24, 'goomba').setDepth(10);
     titleGoomba.anims.play('goomba-walk-title', true);
 
-    // 7. Letrero oficial (ahora cargará correctamente desde scenery)
-    this.add.image(width / 2, 50, 'letrero').setScale(0.62).setDepth(10);
+    // 7. LETRERO CON ESCALA AUTOMÁTICA
+    // Creamos el letrero y calculamos la escala exacta para que mida 145 píxeles de ancho
+    const logo = this.add.image(width / 2, 55, 'letrero').setDepth(10);
+    const targetWidth = 145; 
+    logo.setScale(targetWidth / logo.width);
 
     // 8. Texto de inicio
     const startText = this.add.text(width / 2, 175, 'PRESIONA ENTER', {
