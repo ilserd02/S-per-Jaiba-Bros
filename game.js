@@ -11,18 +11,34 @@ class TitleScene extends Phaser.Scene {
     this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png');
     this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png');
     
-    // Ruta al letrero oficial con anti-caché
-    this.load.image('letrero', 'assets/scenery/letrero.png?v=3'); 
+    // Letrero oficial con anti-caché
+    this.load.image('letrero', 'assets/scenery/letrero.png?v=3');
 
     // Bloques e Items
     this.load.spritesheet('mysteryBox', 'assets/blocks/overworld/misteryBlock.png', { frameWidth: 16, frameHeight: 16 });
+    this.load.image('emptyBox', 'assets/blocks/overworld/emptyBlock.png');
+    this.load.image('mushroom', 'assets/items/mushrooms/superMushroom.png');
+    
+    // Tuberías
+    this.load.image('tube-small', 'assets/scenery/overworld/pipeSmall.png');
+    this.load.image('tube-medium', 'assets/scenery/overworld/pipeMedium.png');
+    this.load.image('tube-large', 'assets/scenery/overworld/pipeLarge.png');
 
-    // Personajes
+    // Personajes y sus estados de animación
     this.load.spritesheet('mario', 'assets/entities/mario.png', { frameWidth: 273, frameHeight: 547 });
+    this.load.spritesheet('mario-grow', 'assets/entities/mario-grow.png', { frameWidth: 273, frameHeight: 547 });
+    this.load.spritesheet('jaiba-eating', 'assets/entities/jaiba-eating.png', { frameWidth: 273, frameHeight: 547 });
+    this.load.spritesheet('mario-dead', 'assets/entities/mario-dead.png', { frameWidth: 273, frameHeight: 547 });
     this.load.spritesheet('goomba', 'assets/entities/overworld/goomba.png', { frameWidth: 16, frameHeight: 16 });
 
-    // Música de fondo
+    // Música y Efectos de Sonido
     this.load.audio('theme', 'assets/sound/music/overworld.mp3');
+    this.load.audio('jump', 'assets/sound/effects/jump.mp3');
+    this.load.audio('kick', 'assets/sound/effects/kick.mp3');
+    this.load.audio('powerup', 'assets/sound/effects/powerup.mp3');
+    this.load.audio('bump', 'assets/sound/effects/bump.mp3');
+    this.load.audio('sprout', 'assets/sound/effects/sprout.mp3');
+    this.load.audio('gameover', 'assets/sound/music/gameover.mp3');
   }
 
   create() {
@@ -100,11 +116,11 @@ class TitleScene extends Phaser.Scene {
     const titleGoomba = this.add.sprite(215, height - 24, 'goomba').setDepth(10);
     titleGoomba.anims.play('goomba-walk-title', true);
 
-   // 7. LETRERO ALINEADO A LA IZQUIERDA Y ARRIBA (Ajustado)
-    // Usamos x: 85 (más a la izquierda que el centro) e y: 40 (más arriba)
+    // 7. LETRERO ALINEADO A LA IZQUIERDA Y ARRIBA (¡No se mueve!)
     const logo = this.add.image(95, 60, 'letrero').setDepth(10);
-    const targetWidth = 240; // Lo hacemos un poco más pequeño para que quepa bien a la izquierda
+    const targetWidth = 240; 
     logo.setScale(targetWidth / logo.width);
+
     // 8. Texto de inicio
     const startText = this.add.text(width / 2, 175, 'PRESIONA ENTER', {
       fontFamily: '"Courier New", Courier, monospace',
@@ -151,6 +167,7 @@ class GameScene extends Phaser.Scene {
       this.floor.create(x, config.height - 16, 'floorbricks').setOrigin(0, 0.5).refreshBody();
     }
 
+    // Tuberías restablecidas correctamente
     this.floor.create(500, config.height - 32, 'tube-small').setOrigin(0.5, 0.5).refreshBody();
     this.floor.create(580, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).refreshBody();
     this.floor.create(700, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).refreshBody();
