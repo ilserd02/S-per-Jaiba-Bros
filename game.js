@@ -145,17 +145,17 @@ function create () {
     repeat: 0
   });
 
-  // --- CREACIÓN DEL JUGADOR (Jaiba viva un 20% más pequeña: 0.048) ---
+  // --- CREACIÓN DEL JUGADOR (Escala base incrementada a 0.203) ---
   this.mario = this.physics.add.sprite(50, 100, 'mario')
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
     .setGravityY(300);
     
-  this.mario.setScale(0.048); 
+  this.mario.setScale(0.203); 
 
-  // Ajuste fino de hitbox para la escala 0.048
-  this.mario.body.setSize(160, 220);
-  this.mario.body.setOffset(56, 320);
+  // Ajuste de colisiones para adaptarse al nuevo tamaño aumentado
+  this.mario.body.setSize(160, 240);
+  this.mario.body.setOffset(56, 300);
   
   this.mario.isBig = false; 
   this.mario.isEating = false; 
@@ -207,10 +207,10 @@ function create () {
       }
       
       mario.setTexture('jaiba-eating');
-      mario.setScale(0.048); 
+      mario.setScale(0.203); 
       
-      mario.body.setSize(160, 220);
-      mario.body.setOffset(48, 780);
+      mario.body.setSize(160, 240);
+      mario.body.setOffset(48, 760);
       mario.anims.play('jaiba-eat-mushroom');
 
       mario.once('animationcomplete-jaiba-eat-mushroom', () => {
@@ -223,11 +223,11 @@ function create () {
         }
 
         mario.setTexture('mario-grow');
-        mario.setScale(0.072); // Jaiba gigante proporcionalmente reducida
-        mario.y -= 15; 
+        mario.setScale(0.227); // Escala de la jaiba gigante aumentada
+        mario.y -= 30; 
         
-        mario.body.setSize(160, 160);
-        mario.body.setOffset(56, 380);
+        mario.body.setSize(160, 180);
+        mario.body.setOffset(56, 360);
         
         mario.body.reset(mario.x, mario.y);
       });
@@ -239,7 +239,7 @@ function create () {
     if (mario.isEating || mario.isDead) return;
     
     if (mario.body.touching.down && goombaHit.body.touching.up) {
-      mario.setVelocityY(-160); 
+      mario.setVelocityY(-180); 
       
       if (this.cache.audio.exists('kick')) {
         this.sound.play('kick');
@@ -259,11 +259,11 @@ function create () {
       if (mario.isBig) {
         mario.isBig = false;
         mario.setTexture('mario'); 
-        mario.setScale(0.048);
+        mario.setScale(0.203);
         
         mario.y -= 5;
-        mario.body.setSize(160, 220);
-        mario.body.setOffset(56, 320);
+        mario.body.setSize(160, 240);
+        mario.body.setOffset(56, 300);
         mario.body.reset(mario.x, mario.y);
         
         goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30;
@@ -279,9 +279,8 @@ function create () {
           this.sound.play('gameover');
         }
         
-        // La animación de muerte mantiene su tamaño solicitado (0.06)
         mario.setTexture('mario-dead');
-        mario.setScale(0.06); 
+        mario.setScale(0.215); // La animación de muerte mantiene su tamaño proporcional superior
         mario.anims.play('jaiba-dead');
 
         this.tweens.add({
@@ -351,9 +350,9 @@ function update () {
     this.mario.anims.play(idleKey, true); 
   }
 
-  // Ajustado ligeramente la potencia del salto para la nueva escala pequeña
+  // Ajustado la potencia de salto para el nuevo volumen corporal de la jaiba
   if (this.keys.up.isDown && this.mario.body.touching.down) {
-    this.mario.setVelocityY(-260);
+    this.mario.setVelocityY(-300);
     if (this.cache.audio.exists('jump')) {
       this.sound.play('jump');
     }
