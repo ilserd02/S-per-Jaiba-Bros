@@ -11,8 +11,8 @@ class TitleScene extends Phaser.Scene {
     this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png');
     this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png');
     
-    // CARGAR EL LETRERO OFICIAL
-    this.load.image('letrero', 'assets/letrero.png'); 
+    // RUTA CORREGIDA PARA EL ASSET DEL LETRERO
+    this.load.image('letrero', 'assets/scenery/letrero.png');
 
     // Bloques e Items
     this.load.spritesheet('mysteryBox', 'assets/blocks/overworld/misteryBlock.png', { frameWidth: 16, frameHeight: 16 });
@@ -62,10 +62,9 @@ class TitleScene extends Phaser.Scene {
     bush1.fillEllipse(130, height - 18, 16, 12);
     bush1.fillEllipse(142, height - 18, 14, 10);
 
-    // 4. Suelo de bloques de ladrillo marrón (Se crean DESPUÉS, cubriendo la base de la montaña)
+    // 4. Suelo de bloques de ladrillo marrón (Se crean DESPUÉS, cubriendo las bases)
     this.floorGroup = this.add.group();
     for (let x = 0; x < width + 16; x += 16) {
-      // Dibujamos el bloque centrado en el borde inferior para tapar perfectamente las bases
       this.floorGroup.create(x, height - 8, 'floorbricks');
     }
 
@@ -83,14 +82,14 @@ class TitleScene extends Phaser.Scene {
     const centerBox = this.add.sprite(width / 2, 125, 'mysteryBox');
     centerBox.anims.play('box-shine-title', true);
 
-    // Bloque misterioso de arriba a la derecha bajado un poco (antes en y:75, ahora en y:95)
+    // Bloque misterioso de la derecha bajado para que no toque el techo
     const rightBox = this.add.sprite(220, 95, 'mysteryBox');
     rightBox.anims.play('box-shine-title', true);
 
-    // 6. Jaiba posicionada pisando el suelo de forma precisa
-    // Ajustado el eje Y a (height - 35) para que coincida perfectamente con el plano del suelo
-    const titleJaiba = this.add.sprite(45, height - 35, 'mario').setScale(0.131);
-    titleJaiba.setFrame(0); // Pose quieta mirando hacia la derecha
+    // 6. Jaiba posicionada pisando el suelo perfectamente sin enterrarse
+    // Cambiado 'y' a 'height - 52' (192px) para compensar la altura del sprite de 547px escalado a 0.131
+    const titleJaiba = this.add.sprite(45, height - 52, 'mario').setScale(0.131);
+    titleJaiba.setFrame(0); 
 
     // Goomba posicionado en el suelo caminando
     if (!this.anims.exists('goomba-walk-title')) {
@@ -104,9 +103,9 @@ class TitleScene extends Phaser.Scene {
     const titleGoomba = this.add.sprite(215, height - 24, 'goomba');
     titleGoomba.anims.play('goomba-walk-title', true);
 
-    // 7. COLOCAR EL LOGO OFICIAL DESDE EL ASSET "letrero.png"
-    // Lo posicionamos centrado horizontalmente tirando un poco a la izquierda y con una escala similar
-    this.add.image(width / 2 - 8, 45, 'letrero').setScale(0.65);
+    // 7. COLOCAR EL LOGO OFICIAL (letrero.png)
+    // Desplazado un poco más a la izquierda (width / 2 - 12) y ajustada la escala para óptima visualización
+    this.add.image(width / 2 - 12, 45, 'letrero').setScale(0.62);
 
     // 8. Mensaje intermitente "PRESIONA ENTER"
     const startText = this.add.text(width / 2, 175, 'PRESIONA ENTER', {
@@ -192,7 +191,7 @@ class GameScene extends Phaser.Scene {
     goomba1.setVelocityX(-40);
     goomba1.setCollideWorldBounds(true);
 
-    // Animaciones del jugador (Jaiba)
+    // Animaciones de la Jaiba
     if (!this.anims.exists('jaiba-walk')) {
       this.anims.create({
         key: 'jaiba-walk',
@@ -443,7 +442,7 @@ class GameScene extends Phaser.Scene {
   }
 }
 
-// --- MENÚ DE JUEGO TERMINADO ---
+// --- MENÚ DE REINTENTAR ---
 function showGameOverMenu (scene) {
   const camX = scene.cameras.main.scrollX + (config.width / 2);
   const camY = config.height / 2;
