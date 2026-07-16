@@ -149,10 +149,10 @@ class GameScene extends Phaser.Scene {
       this.floor.create(x, config.height - 16, 'floorbricks').setOrigin(0, 0.5).setDepth(2).refreshBody();
     }
 
-    // --- DISTRIBUCIÓN DEL NIVEL ELEVADA (EVITA ATASCAMIENTOS) ---
+    // --- DISTRIBUCIÓN DEL NIVEL CORREGIDA (BLOQUES SEPARADOS Y ALTURA ALTA) ---
 
-    // 1. Primer Bloque de Misterio Solitario (Contiene un Hongo)
-    this.createMysteryBox(256, config.height - 96, true);
+    // 1. Primer Bloque de Misterio Solitario (Contiene un Hongo) - Separado a x: 224
+    this.createMysteryBox(224, config.height - 96, true);
 
     // 2. Primera Estructura Combinada Elevada (Ladrillo - Misterio - Ladrillo - Misterio - Ladrillo)
     this.createBrick(320, config.height - 96);
@@ -161,7 +161,7 @@ class GameScene extends Phaser.Scene {
     this.createMysteryBox(368, config.height - 96, false); 
     this.createBrick(384, config.height - 96);
 
-    // 3. Bloque de Misterio Elevado superior (Ajustado proporcionalmente)
+    // 3. Bloque de Misterio Elevado superior
     this.createMysteryBox(352, config.height - 146, false);
 
     // 4. Las Tuberías Progresivas
@@ -179,9 +179,11 @@ class GameScene extends Phaser.Scene {
       });
     }
 
-    // Colocación de Goombas en los mismos espacios libres de la imagen
-    this.createGoomba(340, config.height - 30);
-    this.createGoomba(430, config.height - 30);
+    // Ubicaciones de Goombas ajustadas: Los primeros caminan arriba de los bloques
+    this.createGoomba(224, config.height - 112); // Arriba del bloque solitario
+    this.createGoomba(352, config.height - 112); // Arriba de la hilera larga
+    
+    // Los demás Goombas se quedan patrullando en el piso plano después de las estructuras
     this.createGoomba(665, config.height - 30);
     this.createGoomba(810, config.height - 30);
     this.createGoomba(840, config.height - 30);
