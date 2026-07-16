@@ -80,16 +80,18 @@ function create () {
   this.mushrooms = this.physics.add.group()
   this.goombas = this.physics.add.group()
 
-  // --- GOOMBAS ---
-  const goomba1 = this.goombas.create(450, config.height - 30, 'goomba').setOrigin(0.5, 0.5)
-  goomba1.setVelocityX(-40)
-
+  // --- ANIMACIÓN DEL GOOMBA ---
   this.anims.create({
     key: 'goomba-walk',
     frames: this.anims.generateFrameNumbers('goomba', { start: 0, end: 1 }),
     frameRate: 5,
     repeat: -1
   })
+
+  // --- CORRECCIÓN GOOMBA: Posición y más alta para que no aparezca bugeado en el suelo ---
+  const goomba1 = this.goombas.create(350, config.height - 60, 'goomba').setOrigin(0.5, 0.5)
+  goomba1.setVelocityX(-40)
+  goomba1.setCollideWorldBounds(true)
 
   // --- ANIMACIONES DE LA JAIBA ---
   this.anims.create({
@@ -130,7 +132,6 @@ function create () {
     .setGravityY(300)
     .setScale(0.04) 
 
-  // Caja de colisión chica original
   this.mario.body.setSize(160, 180)
   this.mario.body.setOffset(56, 360)
   
@@ -157,7 +158,7 @@ function create () {
     }
   })
 
-  // --- LÓGICA DE ALIMENTACIÓN MODIFICADA PARA JAIBA MÁS GRANDE ---
+  // Lógica del Hongo
   this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
     if (mario.isEating) return 
     
@@ -181,14 +182,9 @@ function create () {
         mario.body.allowGravity = true 
         
         mario.setTexture('mario-grow')
-        
-        // --- MODIFICADO: JAIBA MÁS GRANDE VISUALMENTE ---
         mario.setScale(0.12) 
-        
-        // Empujón hacia arriba aumentado a 35 para compensar la nueva escala al crecer
         mario.y -= 35 
         
-        // CALIBRADO MANUAL: Hitbox ajustada para escala 0.12 (Pasa holgada bajo bloques)
         mario.body.setSize(160, 160)
         mario.body.setOffset(56, 380)
         
@@ -238,6 +234,7 @@ function create () {
 }
 
 function update () {
+  // Asegurar que los Goombas vivos caminen continuamente
   this.goombas.children.iterate(goomba => {
     if (goomba && goomba.body && goomba.body.enable) {
       goomba.anims.play('goomba-walk', true)
