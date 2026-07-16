@@ -1,35 +1,31 @@
 /* global Phaser */
 
-// --- 1. ESCENA DE LA PORTADA (PANTALLA DE TÍTULO) ---
+// --- 1. ESCENA DE LA PORTADA (PANTALLA DE TÍTULO ORIGINAL) ---
 class TitleScene extends Phaser.Scene {
   constructor() {
     super({ key: 'TitleScene' });
   }
 
   preload() {
-    // Fondos y decoraciones
-    this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png');
-    this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png');
+    // Solo cargamos lo necesario para la portada original
     this.load.image('letrero', 'assets/scenery/letrero.png'); 
+    this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png');
+    this.load.spritesheet('mario', 'assets/entities/mario.png', { frameWidth: 273, frameHeight: 547 });
 
-    // Bloques e Items
+    // Pre-cargamos el resto de elementos para el nivel de juego
+    this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png');
     this.load.spritesheet('mysteryBox', 'assets/blocks/overworld/misteryBlock.png', { frameWidth: 16, frameHeight: 16 });
     this.load.image('emptyBox', 'assets/blocks/overworld/emptyBlock.png');
     this.load.image('mushroom', 'assets/collectibles/super-mushroom.png');
-    
-    // Tuberías
     this.load.image('tube-small', 'assets/scenery/vertical-small-tube.png');
     this.load.image('tube-medium', 'assets/scenery/vertical-large-tube.png');
     this.load.image('tube-large', 'assets/scenery/vertical-large-tube.png');
-
-    // Personajes y sus estados de animación
-    this.load.spritesheet('mario', 'assets/entities/mario.png', { frameWidth: 273, frameHeight: 547 });
     this.load.spritesheet('mario-grow', 'assets/entities/mario-grown.png', { frameWidth: 273, frameHeight: 547 });
     this.load.spritesheet('jaiba-eating', 'assets/entities/mario-eat.png', { frameWidth: 256, frameHeight: 1024 });
     this.load.spritesheet('mario-dead', 'assets/entities/mario-dead.png', { frameWidth: 273, frameHeight: 547 });
     this.load.spritesheet('goomba', 'assets/entities/overworld/goomba.png', { frameWidth: 16, frameHeight: 16 });
 
-    // Música y Efectos de Sonido
+    // Sonidos
     this.load.audio('theme', 'assets/sound/music/overworld.mp3');
     this.load.audio('jump', 'assets/sound/effects/jump.mp3');
     this.load.audio('kick', 'assets/sound/effects/kick.mp3');
@@ -43,40 +39,36 @@ class TitleScene extends Phaser.Scene {
     const width = this.scale.width;
     const height = this.scale.height;
 
-    // Fondo azul cielo
-    this.cameras.main.setBackgroundColor('#92a1fc'); 
+    // Fondo celeste plano de tu portada
+    this.cameras.main.setBackgroundColor('#049cd8'); 
 
-    // Nubes
-    this.add.image(20, 30, 'cloud1').setScale(0.08).setAlpha(0.9).setDepth(1);
-    this.add.image(90, 35, 'cloud1').setScale(0.08).setAlpha(0.9).setDepth(1);
-    this.add.image(210, 40, 'cloud1').setScale(0.08).setAlpha(0.9).setDepth(1);
-
-    // Suelo de título
+    // Suelo inferior
     for (let x = 0; x < width + 16; x += 16) {
       this.add.image(x, height - 8, 'floorbricks').setDepth(2);
     }
 
-    // Jaiba estática de muestra en el suelo (Escala 0.203)
+    // Jaiba estática de muestra en el suelo con tu nueva escala reducida (0.163)
     const titleJaiba = this.add.sprite(45, height - 16, 'mario')
       .setOrigin(0.5, 1) 
-      .setScale(0.203)
+      .setScale(0.163)
       .setDepth(10); 
     titleJaiba.setFrame(0); 
 
-    // Letrero del logo
+    // Letrero original centrado
     if (this.textures.exists('letrero')) {
-      const logo = this.add.image(width / 2, 60, 'letrero').setDepth(10); 
+      const logo = this.add.image(width / 2, height / 2 - 25, 'letrero').setDepth(10); 
       logo.setScale(180 / logo.width);
     }
 
-    // Texto de inicio "PRESIONA ENTER"
-    const startText = this.add.text(width / 2, 175, 'PRESIONA ENTER', {
+    // Texto de inicio original "PRESS ENTER TO START"
+    const startText = this.add.text(width / 2, height / 2 + 35, 'PRESS ENTER TO START', {
       fontFamily: '"Courier New", Courier, monospace',
       fontSize: '10px',
       fill: '#ffffff',
       fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(10);
 
+    // Parpadeo suave del texto de inicio
     this.tweens.add({
       targets: startText,
       alpha: 0,
@@ -85,7 +77,7 @@ class TitleScene extends Phaser.Scene {
       repeat: -1
     });
 
-    // Tecla Enter para saltar al nivel
+    // Evento de inicio al presionar Enter
     this.input.keyboard.once('keydown-ENTER', () => {
       this.scene.start('GameScene');
     });
@@ -111,7 +103,7 @@ class GameScene extends Phaser.Scene {
 
     this.floor = this.physics.add.staticGroup();
 
-    // Suelo
+    // Generación del suelo
     for (let x = 0; x < 2000; x += 16) {
       if (x >= 600 && x <= 680) continue;
       this.floor.create(x, config.height - 16, 'floorbricks').setOrigin(0, 0.5).refreshBody();
@@ -206,13 +198,13 @@ class GameScene extends Phaser.Scene {
       });
     }
 
-    // Creación del jugador (Escala original 0.203)
+    // Creación del jugador (Nueva escala reducida a 0.163)
     this.mario = this.physics.add.sprite(50, 100, 'mario')
       .setOrigin(0.5, 0.5)
       .setCollideWorldBounds(true)
       .setGravityY(300);
       
-    this.mario.setScale(0.203); 
+    this.mario.setScale(0.163); 
     this.mario.body.setSize(160, 240);
     this.mario.body.setOffset(56, 300);
     
@@ -254,7 +246,7 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    // Colisión con el Hongo (Lógica de alimentación protegida)
+    // Colisión con el Hongo (Segura contra crashes)
     this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
       if (mario.isEating || mario.isDead) return;
       
@@ -269,10 +261,10 @@ class GameScene extends Phaser.Scene {
           this.sound.play('bump');
         }
         
-        // Verificación de seguridad: si la textura 'jaiba-eating' NO cargó bien (404), nos saltamos la animación para no crashearnos
+        // Animación de comer con escala ajustada a 0.163
         if (this.textures.exists('jaiba-eating') && this.anims.exists('jaiba-eat-mushroom')) {
           mario.setTexture('jaiba-eating');
-          mario.setScale(0.203); 
+          mario.setScale(0.163); 
           mario.body.setSize(160, 240);
           mario.body.setOffset(48, 760);
           mario.anims.play('jaiba-eat-mushroom');
@@ -281,7 +273,6 @@ class GameScene extends Phaser.Scene {
             this.convertirEnGrande(mario);
           });
         } else {
-          // Si falló el sprite de comer, se hace grande de golpe de forma segura
           this.convertirEnGrande(mario);
         }
       }
@@ -312,7 +303,7 @@ class GameScene extends Phaser.Scene {
         if (mario.isBig) {
           mario.isBig = false;
           mario.setTexture('mario'); 
-          mario.setScale(0.203);
+          mario.setScale(0.163); // Retorno a escala original pequeña
           
           mario.y -= 5;
           mario.body.setSize(160, 240);
@@ -334,7 +325,7 @@ class GameScene extends Phaser.Scene {
           
           if (this.textures.exists('mario-dead') && this.anims.exists('jaiba-dead')) {
             mario.setTexture('mario-dead');
-            mario.setScale(0.215); 
+            mario.setScale(0.175); // Escala muerta ajustada a 0.175
             mario.anims.play('jaiba-dead');
           }
 
@@ -358,7 +349,7 @@ class GameScene extends Phaser.Scene {
     this.keys = this.input.keyboard.createCursorKeys();
   }
 
-  // Función auxiliar para crecer de forma limpia
+  // Crecer de forma limpia (Escala reducida a 0.187)
   convertirEnGrande(mario) {
     mario.isBig = true;
     mario.isEating = false;
@@ -370,7 +361,7 @@ class GameScene extends Phaser.Scene {
 
     if (this.textures.exists('mario-grow')) {
       mario.setTexture('mario-grow');
-      mario.setScale(0.227); 
+      mario.setScale(0.187); 
     }
     mario.y -= 30; 
     
@@ -459,7 +450,7 @@ const config = {
       debug: false 
     }
   },
-  scene: [TitleScene, GameScene] // Ambas escenas registradas en orden
+  scene: [TitleScene, GameScene]
 };
 
 new Phaser.Game(config);
