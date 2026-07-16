@@ -7,7 +7,7 @@ class TitleScene extends Phaser.Scene {
   }
 
   preload() {
-    // Cargamos los elementos para la portada
+    // Cargamos los elementos para la portada y el fondo del juego
     this.load.image('letrero', 'assets/scenery/letrero.png'); 
     this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png');
     this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png'); // Cargamos la nube
@@ -42,8 +42,8 @@ class TitleScene extends Phaser.Scene {
     const width = this.scale.width;
     const height = this.scale.height;
 
-    // Fondo celeste plano
-    this.cameras.main.setBackgroundColor('#049cd8'); 
+    // Fondo azul claro tal como se especificó
+    this.cameras.main.setBackgroundColor('#a9d0f5'); 
 
     // --- NUBES EN EL FONDO DE LA PORTADA ---
     if (this.textures.exists('cloud1')) {
@@ -106,6 +106,8 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
+    const height = this.scale.height; // Usaremos esto para colocar los elementos de fondo
+
     // Música de fondo segura
     if (this.cache.audio.exists('theme') && !this.sound.get('theme')) {
       this.bgMusic = this.sound.add('theme', { loop: true, volume: 0.5 });
@@ -114,7 +116,36 @@ class GameScene extends Phaser.Scene {
       this.bgMusic.play();
     }
 
-    this.add.image(100, 50, 'cloud1').setOrigin(0, 0).setScale(0.15);
+    // Fondo azul claro tal como se especificó
+    this.cameras.main.setBackgroundColor('#a9d0f5'); 
+
+    // --- NUBES EN EL FONDO DEL JUEGO ---
+    if (this.textures.exists('cloud1')) {
+      // Replicamos la nube de la portada
+      this.add.image(130, 25, 'cloud1').setScale(0.14).setAlpha(0.85).setDepth(1);
+    }
+
+    // --- MONTAÑAS EN EL FONDO DEL JUEGO ---
+    // Agregamos montañas replicadas de la portada
+    const mountainGraphics = this.add.graphics({ fillStyle: { color: 0x009a00 } }); // Verde para la montaña
+    
+    // Función helper para dibujar una montaña (Triángulo)
+    function drawMountain(graphics, x, y, baseWidth, mountainHeight) {
+      const triangle = new Phaser.Geom.Triangle(
+        x, y, // Vértice inferior izquierdo
+        x + baseWidth / 2, y - mountainHeight, // Vértice superior
+        x + baseWidth, y // Vértice inferior derecho
+      );
+      graphics.fillTriangleShape(triangle);
+    }
+    
+    // Montaña grande izquierda
+    drawMountain(mountainGraphics, 30, height - 16, 60, 40); 
+    // Montaña pequeña derecha
+    drawMountain(mountainGraphics, 200, height - 16, 40, 25);
+    
+    // Le damos profundidad a las montañas para que estén detrás de todo
+    mountainGraphics.setDepth(1);
 
     this.floor = this.physics.add.staticGroup();
 
@@ -455,7 +486,7 @@ const config = {
   type: Phaser.AUTO,
   width: 256,
   height: 244,
-  backgroundColor: '#049cd8',
+  backgroundColor: '#049cd8', // Color celeste claro modificado
   parent: 'game',
   physics: {
     default: 'arcade',
