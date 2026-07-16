@@ -44,7 +44,7 @@ function preload () {
   // --- ENEMIGO GOOMBA ---
   this.load.spritesheet('goomba', 'assets/entities/overworld/goomba.png', { frameWidth: 16, frameHeight: 16 })
 
-  // --- CORRECCIÓN DE RUTAS DE AUDIO ---
+  // --- EFECTOS DE SONIDO ---
   this.load.audio('jump', 'assets/sound/effects/jump.mp3')
   this.load.audio('powerup', 'assets/sound/effects/powerup.mp3')
   this.load.audio('kick', 'assets/sound/effects/kick.mp3') 
@@ -174,8 +174,8 @@ function create () {
       mario.setVelocity(0, 0)
       mario.body.allowGravity = false 
       
-      // SISTEMA DE SEGURIDAD AUDIO: Si no existe en caché por mala ruta, no congela el juego
-      if (this.sound.keys['powerup']) {
+      // Comprobación correcta mediante el caché de audio de Phaser
+      if (this.cache.audio.exists('powerup')) {
         this.sound.play('powerup')
       }
       
@@ -210,7 +210,7 @@ function create () {
     if (mario.body.touching.down && goombaHit.body.touching.up) {
       mario.setVelocityY(-180) 
       
-      if (this.sound.keys['kick']) {
+      if (this.cache.audio.exists('kick')) {
         this.sound.play('kick')
       }
       
@@ -239,7 +239,7 @@ function create () {
       } else {
         mario.isDead = true
         
-        if (this.sound.keys['gameover']) {
+        if (this.cache.audio.exists('gameover')) {
           this.sound.play('gameover')
         }
         
@@ -283,14 +283,14 @@ function update () {
 
   if (this.keys.up.isDown && this.mario.body.touching.down) {
     this.mario.setVelocityY(-285)
-    if (this.sound.keys['jump']) {
+    if (this.cache.audio.exists('jump')) {
       this.sound.play('jump')
     }
   }
 
   if (this.mario.y >= config.height) {
     this.mario.isDead = true
-    if (this.sound.keys['gameover']) {
+    if (this.cache.audio.exists('gameover')) {
       this.sound.play('gameover')
     }
     this.mario.setCollideWorldBounds(false)
