@@ -50,6 +50,10 @@ function preload () {
   this.load.audio('powerup', 'assets/sound/effects/powerup.mp3');
   this.load.audio('kick', 'assets/sound/effects/kick.mp3'); 
   this.load.audio('gameover', 'assets/sound/music/gameover.mp3');
+  
+  // NUEVOS SONIDOS
+  this.load.audio('bump', 'assets/sound/effects/bump.mp3'); // Golpe a la caja
+  this.load.audio('sprout', 'assets/sound/effects/sprout.mp3'); // Hongo saliendo de la caja
 }
 
 function create () {
@@ -158,15 +162,27 @@ function create () {
 
   // Golpear bloque misterioso
   this.physics.add.collider(this.mario, this.mysteryBoxes, (mario, boxHit) => {
-    if (mario.body.touching.up && boxHit.hasItem) {
-      boxHit.hasItem = false;
-      boxHit.anims.stop();
-      boxHit.setTexture('emptyBox'); 
-      boxHit.refreshBody();
+    if (mario.body.touching.up) {
+      if (boxHit.hasItem) {
+        boxHit.hasItem = false;
+        boxHit.anims.stop();
+        boxHit.setTexture('emptyBox'); 
+        boxHit.refreshBody();
 
-      const mushroom = this.mushrooms.create(boxHit.x + 8, boxHit.y - 18, 'mushroom');
-      mushroom.setOrigin(0.5, 0.5);
-      mushroom.setVelocityX(50); 
+        // SONIDO: Hongo saliendo del bloque
+        if (this.cache.audio.exists('sprout')) {
+          this.sound.play('sprout');
+        }
+
+        const mushroom = this.mushrooms.create(boxHit.x + 8, boxHit.y - 18, 'mushroom');
+        mushroom.setOrigin(0.5, 0.5);
+        mushroom.setVelocityX(50); 
+      } else {
+        // SONIDO: Golpe seco si la caja ya está vacía
+        if (this.cache.audio.exists('bump')) {
+          this.sound.play('bump');
+        }
+      }
     }
   });
 
@@ -181,8 +197,9 @@ function create () {
       mario.setVelocity(0, 0);
       mario.body.allowGravity = false; 
       
-      if (this.cache.audio.exists('powerup')) {
-        this.sound.play('powerup');
+      // SONIDO: Cuando empieza a comerse el hongo
+      if (this.cache.audio.exists('bump')) {
+        this.sound.play('bump');
       }
       
       mario.setTexture('jaiba-eating');
@@ -197,6 +214,11 @@ function create () {
         mario.isEating = false;
         mario.body.allowGravity = true; 
         
+        // SONIDO: ¡Efecto clásico cuando termina la animación y crece por completo!
+        if (this.cache.audio.exists('powerup')) {
+          this.sound.play('powerup');
+        }
+
         mario.setTexture('mario-grow');
         mario.setScale(0.18); 
         mario.y -= 45; 
@@ -243,10 +265,13 @@ function create () {
         
         goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30;
       } else {
-        // --- PROCESO DE MUERTE CON ANIMACIÓN EXTENDIDA ---
+        // --- PROCESO DE MUERTE ACOSTA EN EL SUELO ---
         mario.isDead = true;
         mario.setVelocity(0, 0);
+        
+        // Hacemos que se quede fija en su lugar sobre el suelo
         mario.body.allowGravity = false;
+        mario.body.setVelocity(0, 0);
         mario.body.enable = false; 
         
         if (this.cache.audio.exists('gameover')) {
@@ -257,19 +282,15 @@ function create () {
         mario.setScale(0.14); 
         mario.anims.play('jaiba-dead');
 
+        // MODIFICADO: Se queda tirada en el suelo y luego desaparece con Fade Out suave
         this.tweens.add({
           targets: mario,
-          y: mario.y - 50,
-          duration: 700,
-          ease: 'Power1',
+          alpha: 0,
+          delay: 1000, // Se queda 1 segundo tirada en el piso
+          duration: 800, // Tarda 0.8 segundos en desaparecer por completo
+          ease: 'Linear',
           onComplete: () => {
-            this.tweens.add({
-              targets: mario,
-              y: config.height + 120,
-              duration: 1400,
-              ease: 'Power1',
-              onComplete: () => { this.scene.restart(); }
-            });
+            this.scene.restart();
           }
         });
       }
