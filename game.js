@@ -44,6 +44,10 @@ function preload () {
   // --- ENEMIGO GOOMBA ---
   this.load.spritesheet('goomba', 'assets/entities/overworld/goomba.png', { frameWidth: 16, frameHeight: 16 })
 
+  // --- EFECTOS DE SONIDO (Asegúrate de tener estos archivos en tus carpetas) ---
+  this.load.audio('jump', 'assets/sound/effects/jump.mp3')
+  this.load.audio('powerup', 'assets/sound/effects/powerup.mp3')
+  this.load.audio('kick', 'assets/sound/effects/kick.mp3') // Sonido al aplastar enemigo
   this.load.audio('gameover', 'assets/sound/music/gameover.mp3')
 }
 
@@ -131,12 +135,12 @@ function create () {
     .setCollideWorldBounds(true)
     .setGravityY(300)
     
-  // MODIFICADO MANUAL: Jaiba inicial un poco más grande (de 0.04 a 0.06)
-  this.mario.setScale(0.06) 
+  // MODIFICADO: Jaiba inicial todavía más grande (Escala 0.08)
+  this.mario.setScale(0.08) 
 
-  // Hitbox calibrada para la nueva escala chica 0.06
-  this.mario.body.setSize(160, 200)
-  this.mario.body.setOffset(56, 340)
+  // Hitbox calibrada para la nueva escala chica 0.08
+  this.mario.body.setSize(160, 220)
+  this.mario.body.setOffset(56, 320)
   
   this.mario.isBig = false 
   this.mario.isEating = false 
@@ -161,7 +165,7 @@ function create () {
     }
   })
 
-  // --- LÓGICA DE ALIMENTACIÓN Y TRANSFORMACIÓN ---
+  // --- LÓGICA DE ALIMENTACIÓN ---
   this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
     if (mario.isEating) return 
     
@@ -172,13 +176,16 @@ function create () {
       mario.setVelocity(0, 0)
       mario.body.allowGravity = false 
       
+      // SONIDO: Efecto powerup al tomar el hongo
+      this.sound.play('powerup')
+      
       mario.setTexture('jaiba-eating')
       
-      // MODIFICADO MANUAL: Escala al comer aumentada proporcionalmente (de 0.04 a 0.06)
-      mario.setScale(0.06) 
+      // MODIFICADO: Escala al comer aumentada a la par (0.08)
+      mario.setScale(0.08) 
       
-      mario.body.setSize(160, 200)
-      mario.body.setOffset(48, 800)
+      mario.body.setSize(160, 220)
+      mario.body.setOffset(48, 780)
       mario.anims.play('jaiba-eat-mushroom')
 
       mario.once('animationcomplete-jaiba-eat-mushroom', () => {
@@ -188,7 +195,7 @@ function create () {
         
         mario.setTexture('mario-grow')
         
-        // Mantiene la jerarquía: La jaiba gigante se queda en 0.12
+        // Mantiene la jerarquía: Jaiba Gigante se queda en 0.12
         mario.setScale(0.12) 
         mario.y -= 35 
         
@@ -200,13 +207,16 @@ function create () {
     }
   })
 
-  // --- LÓGICA DE INTERACCIÓN GOOMBA BLINDADA ---
+  // --- LÓGICA DE INTERACCIÓN GOOMBA ---
   this.physics.add.collider(this.mario, this.goombas, (mario, goombaHit) => {
     if (mario.isEating || mario.isDead) return 
     
-    // Si saltas sobre el Goomba, lo aplastas
     if (mario.body.touching.down && goombaHit.body.touching.up) {
       mario.setVelocityY(-180) 
+      
+      // SONIDO: Efecto al aplastar al enemigo
+      this.sound.play('kick')
+      
       goombaHit.setVelocityX(0)
       goombaHit.body.enable = false
       goombaHit.setFrame(2)
@@ -218,24 +228,25 @@ function create () {
         onComplete: () => { goombaHit.destroy() }
       })
     } else {
-      // Si el Goomba te toca de lado o arriba:
       if (mario.isBig) {
-        // FASE 1: Estás grande, te encoge al nuevo tamaño chico (0.06)
         mario.isBig = false
         mario.setTexture('mario') 
-        mario.setScale(0.06)
         
-        // Ajustamos la posición y reseteamos la hitbox al tamaño de la jaiba chica
+        // Regresa a la nueva escala base de 0.08
+        mario.setScale(0.08)
+        
         mario.y -= 5
-        mario.body.setSize(160, 200)
-        mario.body.setOffset(56, 340)
+        mario.body.setSize(160, 220)
+        mario.body.setOffset(56, 320)
         mario.body.reset(mario.x, mario.y)
         
-        // Separación física inmediata temporal para evitar colisiones repetidas en el mismo frame
-        goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30;
+        goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30
       } else {
-        // FASE 2: Estás chico y te vuelven a tocar, MUERES
         mario.isDead = true
+        
+        // SONIDO: Música/Sonido de muerte del Mario original
+        this.sound.play('gameover')
+        
         mario.setVelocity(0, -300)
         mario.setCollideWorldBounds(false)
         setTimeout(() => this.scene.restart(), 2000)
@@ -274,12 +285,15 @@ function update () {
     this.mario.anims.play(idleKey, true) 
   }
 
+  // --- SONIDO DE SALTO ---
   if (this.keys.up.isDown && this.mario.body.touching.down) {
     this.mario.setVelocityY(-285)
+    this.sound.play('jump') // Ejecuta el audio de salto
   }
 
   if (this.mario.y >= config.height) {
     this.mario.isDead = true
+    this.sound.play('gameover') // Sonido si cae al vacío
     this.mario.setCollideWorldBounds(false)
     setTimeout(() => { this.scene.restart() }, 2000)
   }
