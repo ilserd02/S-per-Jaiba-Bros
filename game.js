@@ -130,7 +130,7 @@ function create () {
     .setGravityY(300)
     .setScale(0.04) 
 
-  // Caja de colisión calibrada baja y estrecha
+  // Caja de colisión chica original
   this.mario.body.setSize(160, 180)
   this.mario.body.setOffset(56, 360)
   
@@ -157,7 +157,7 @@ function create () {
     }
   })
 
-  // --- LÓGICA DE ALIMENTACIÓN ---
+  // --- LÓGICA DE ALIMENTACIÓN MODIFICADA PARA JAIBA MÁS GRANDE ---
   this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
     if (mario.isEating) return 
     
@@ -181,12 +181,16 @@ function create () {
         mario.body.allowGravity = true 
         
         mario.setTexture('mario-grow')
-        mario.setScale(0.08) 
         
-        mario.y -= 10 
+        // --- MODIFICADO: JAIBA MÁS GRANDE VISUALMENTE ---
+        mario.setScale(0.12) 
         
-        mario.body.setSize(160, 190)
-        mario.body.setOffset(56, 350)
+        // Empujón hacia arriba aumentado a 35 para compensar la nueva escala al crecer
+        mario.y -= 35 
+        
+        // CALIBRADO MANUAL: Hitbox ajustada para escala 0.12 (Pasa holgada bajo bloques)
+        mario.body.setSize(160, 160)
+        mario.body.setOffset(56, 380)
         
         mario.body.reset(mario.x, mario.y)
       })
