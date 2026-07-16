@@ -46,7 +46,7 @@ function preload () {
   this.load.spritesheet('goomba', 'assets/entities/overworld/goomba.png', { frameWidth: 16, frameHeight: 16 });
 
   // --- EFECTOS DE SONIDO Y MÚSICA ---
-  this.load.audio('theme', 'assets/sound/music/overworld.mp3'); // Música constante de fondo
+  this.load.audio('theme', 'assets/sound/music/overworld.mp3'); 
   this.load.audio('jump', 'assets/sound/effects/jump.mp3');
   this.load.audio('powerup', 'assets/sound/effects/powerup.mp3');
   this.load.audio('kick', 'assets/sound/effects/kick.mp3'); 
@@ -56,7 +56,7 @@ function preload () {
 }
 
 function create () {
-  // --- INICIAR MÚSICA DE FONDO EN BUCLE ---
+  // --- INICIAR MÚSICA DE FONDO ---
   if (this.cache.audio.exists('theme') && !this.sound.get('theme')) {
     this.bgMusic = this.sound.add('theme', { loop: true, volume: 0.5 });
     this.bgMusic.play();
@@ -145,16 +145,17 @@ function create () {
     repeat: 0
   });
 
-  // --- CREACIÓN DEL JUGADOR ---
+  // --- CREACIÓN DEL JUGADOR (Jaiba viva un 20% más pequeña: 0.048) ---
   this.mario = this.physics.add.sprite(50, 100, 'mario')
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
     .setGravityY(300);
     
-  this.mario.setScale(0.14); 
+  this.mario.setScale(0.048); 
 
-  this.mario.body.setSize(160, 240);
-  this.mario.body.setOffset(56, 300);
+  // Ajuste fino de hitbox para la escala 0.048
+  this.mario.body.setSize(160, 220);
+  this.mario.body.setOffset(56, 320);
   
   this.mario.isBig = false; 
   this.mario.isEating = false; 
@@ -206,10 +207,10 @@ function create () {
       }
       
       mario.setTexture('jaiba-eating');
-      mario.setScale(0.14); 
+      mario.setScale(0.048); 
       
-      mario.body.setSize(160, 240);
-      mario.body.setOffset(48, 760);
+      mario.body.setSize(160, 220);
+      mario.body.setOffset(48, 780);
       mario.anims.play('jaiba-eat-mushroom');
 
       mario.once('animationcomplete-jaiba-eat-mushroom', () => {
@@ -222,11 +223,11 @@ function create () {
         }
 
         mario.setTexture('mario-grow');
-        mario.setScale(0.18); 
-        mario.y -= 45; 
+        mario.setScale(0.072); // Jaiba gigante proporcionalmente reducida
+        mario.y -= 15; 
         
-        mario.body.setSize(160, 180);
-        mario.body.setOffset(56, 360);
+        mario.body.setSize(160, 160);
+        mario.body.setOffset(56, 380);
         
         mario.body.reset(mario.x, mario.y);
       });
@@ -238,7 +239,7 @@ function create () {
     if (mario.isEating || mario.isDead) return;
     
     if (mario.body.touching.down && goombaHit.body.touching.up) {
-      mario.setVelocityY(-180); 
+      mario.setVelocityY(-160); 
       
       if (this.cache.audio.exists('kick')) {
         this.sound.play('kick');
@@ -258,19 +259,16 @@ function create () {
       if (mario.isBig) {
         mario.isBig = false;
         mario.setTexture('mario'); 
-        mario.setScale(0.14);
+        mario.setScale(0.048);
         
         mario.y -= 5;
-        mario.body.setSize(160, 240);
-        mario.body.setOffset(56, 300);
+        mario.body.setSize(160, 220);
+        mario.body.setOffset(56, 320);
         mario.body.reset(mario.x, mario.y);
         
         goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30;
       } else {
-        // --- PROCESO DE MUERTE DE LA JAIBA ---
         mario.isDead = true;
-        
-        // Pausar música principal
         if (this.bgMusic) this.bgMusic.stop();
 
         mario.body.allowGravity = false;
@@ -281,8 +279,9 @@ function create () {
           this.sound.play('gameover');
         }
         
+        // La animación de muerte mantiene su tamaño solicitado (0.06)
         mario.setTexture('mario-dead');
-        mario.setScale(0.14); 
+        mario.setScale(0.06); 
         mario.anims.play('jaiba-dead');
 
         this.tweens.add({
@@ -292,7 +291,6 @@ function create () {
           duration: 800, 
           ease: 'Linear',
           onComplete: () => {
-            // Llama a la función para mostrar el menú de reintento
             showGameOverMenu(this);
           }
         });
@@ -306,27 +304,23 @@ function create () {
   this.keys = this.input.keyboard.createCursorKeys();
 }
 
-// --- FUNCIÓN PARA MOSTRAR EL BOTÓN INTERACTIVO AL MORIR ---
 function showGameOverMenu (scene) {
-  // Obtenemos el centro de la cámara actual para que el botón aparezca visible en pantalla
   const camX = scene.cameras.main.scrollX + (config.width / 2);
   const camY = config.height / 2;
 
   const retryButton = scene.add.text(camX, camY, '¿Volver a intentar?', {
     fontFamily: 'Arial',
-    fontSize: '16px',
+    fontSize: '14px',
     fill: '#ffffff',
     backgroundColor: '#000000',
-    padding: { x: 10, y: 5 }
+    padding: { x: 8, y: 4 }
   }).setOrigin(0.5);
 
   retryButton.setInteractive({ useHandCursor: true });
 
-  // Efectos visuales al pasar el mouse por encima
   retryButton.on('pointerover', () => retryButton.setStyle({ fill: '#ff0000' }));
   retryButton.on('pointerout', () => retryButton.setStyle({ fill: '#ffffff' }));
 
-  // Acción al hacer clic: reiniciar escena
   retryButton.on('pointerdown', () => {
     scene.scene.restart();
   });
@@ -357,14 +351,14 @@ function update () {
     this.mario.anims.play(idleKey, true); 
   }
 
+  // Ajustado ligeramente la potencia del salto para la nueva escala pequeña
   if (this.keys.up.isDown && this.mario.body.touching.down) {
-    this.mario.setVelocityY(-285);
+    this.mario.setVelocityY(-260);
     if (this.cache.audio.exists('jump')) {
       this.sound.play('jump');
     }
   }
 
-  // Caída al vacío
   if (this.mario.y >= config.height) {
     this.mario.isDead = true;
     if (this.bgMusic) this.bgMusic.stop();
