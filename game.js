@@ -45,18 +45,25 @@ function preload () {
   // --- ENEMIGO GOOMBA ---
   this.load.spritesheet('goomba', 'assets/entities/overworld/goomba.png', { frameWidth: 16, frameHeight: 16 });
 
-  // --- EFECTOS DE SONIDO ---
+  // --- EFECTOS DE SONIDO Y MÚSICA ---
+  this.load.audio('theme', 'assets/sound/music/overworld.mp3'); // Música constante de fondo
   this.load.audio('jump', 'assets/sound/effects/jump.mp3');
   this.load.audio('powerup', 'assets/sound/effects/powerup.mp3');
   this.load.audio('kick', 'assets/sound/effects/kick.mp3'); 
   this.load.audio('gameover', 'assets/sound/music/gameover.mp3');
-  
-  // NUEVOS SONIDOS
-  this.load.audio('bump', 'assets/sound/effects/bump.mp3'); // Golpe a la caja
-  this.load.audio('sprout', 'assets/sound/effects/sprout.mp3'); // Hongo saliendo de la caja
+  this.load.audio('bump', 'assets/sound/effects/bump.mp3'); 
+  this.load.audio('sprout', 'assets/sound/effects/sprout.mp3'); 
 }
 
 function create () {
+  // --- INICIAR MÚSICA DE FONDO EN BUCLE ---
+  if (this.cache.audio.exists('theme') && !this.sound.get('theme')) {
+    this.bgMusic = this.sound.add('theme', { loop: true, volume: 0.5 });
+    this.bgMusic.play();
+  } else if (this.bgMusic && !this.bgMusic.isPlaying) {
+    this.bgMusic.play();
+  }
+
   this.add.image(100, 50, 'cloud1').setOrigin(0, 0).setScale(0.15);
 
   this.floor = this.physics.add.staticGroup();
@@ -131,7 +138,6 @@ function create () {
     repeat: 0
   });
 
-  // Animación pausada de muerte
   this.anims.create({
     key: 'jaiba-dead',
     frames: this.anims.generateFrameNumbers('mario-dead', { start: 0, end: 5 }),
@@ -169,7 +175,6 @@ function create () {
         boxHit.setTexture('emptyBox'); 
         boxHit.refreshBody();
 
-        // SONIDO: Hongo saliendo del bloque
         if (this.cache.audio.exists('sprout')) {
           this.sound.play('sprout');
         }
@@ -178,7 +183,6 @@ function create () {
         mushroom.setOrigin(0.5, 0.5);
         mushroom.setVelocityX(50); 
       } else {
-        // SONIDO: Golpe seco si la caja ya está vacía
         if (this.cache.audio.exists('bump')) {
           this.sound.play('bump');
         }
@@ -197,7 +201,6 @@ function create () {
       mario.setVelocity(0, 0);
       mario.body.allowGravity = false; 
       
-      // SONIDO: Cuando empieza a comerse el hongo
       if (this.cache.audio.exists('bump')) {
         this.sound.play('bump');
       }
@@ -214,7 +217,6 @@ function create () {
         mario.isEating = false;
         mario.body.allowGravity = true; 
         
-        // SONIDO: ¡Efecto clásico cuando termina la animación y crece por completo!
         if (this.cache.audio.exists('powerup')) {
           this.sound.play('powerup');
         }
@@ -265,11 +267,12 @@ function create () {
         
         goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30;
       } else {
-        // --- PROCESO DE MUERTE ACOSTA EN EL SUELO ---
+        // --- PROCESO DE MUERTE DE LA JAIBA ---
         mario.isDead = true;
-        mario.setVelocity(0, 0);
         
-        // Hacemos que se quede fija en su lugar sobre el suelo
+        // Pausar música principal
+        if (this.bgMusic) this.bgMusic.stop();
+
         mario.body.allowGravity = false;
         mario.body.setVelocity(0, 0);
         mario.body.enable = false; 
@@ -282,15 +285,15 @@ function create () {
         mario.setScale(0.14); 
         mario.anims.play('jaiba-dead');
 
-        // MODIFICADO: Se queda tirada en el suelo y luego desaparece con Fade Out suave
         this.tweens.add({
           targets: mario,
           alpha: 0,
-          delay: 1000, // Se queda 1 segundo tirada en el piso
-          duration: 800, // Tarda 0.8 segundos en desaparecer por completo
+          delay: 1000, 
+          duration: 800, 
           ease: 'Linear',
           onComplete: () => {
-            this.scene.restart();
+            // Llama a la función para mostrar el menú de reintento
+            showGameOverMenu(this);
           }
         });
       }
@@ -301,6 +304,32 @@ function create () {
   this.cameras.main.startFollow(this.mario);
 
   this.keys = this.input.keyboard.createCursorKeys();
+}
+
+// --- FUNCIÓN PARA MOSTRAR EL BOTÓN INTERACTIVO AL MORIR ---
+function showGameOverMenu (scene) {
+  // Obtenemos el centro de la cámara actual para que el botón aparezca visible en pantalla
+  const camX = scene.cameras.main.scrollX + (config.width / 2);
+  const camY = config.height / 2;
+
+  const retryButton = scene.add.text(camX, camY, '¿Volver a intentar?', {
+    fontFamily: 'Arial',
+    fontSize: '16px',
+    fill: '#ffffff',
+    backgroundColor: '#000000',
+    padding: { x: 10, y: 5 }
+  }).setOrigin(0.5);
+
+  retryButton.setInteractive({ useHandCursor: true });
+
+  // Efectos visuales al pasar el mouse por encima
+  retryButton.on('pointerover', () => retryButton.setStyle({ fill: '#ff0000' }));
+  retryButton.on('pointerout', () => retryButton.setStyle({ fill: '#ffffff' }));
+
+  // Acción al hacer clic: reiniciar escena
+  retryButton.on('pointerdown', () => {
+    scene.scene.restart();
+  });
 }
 
 function update () {
@@ -335,11 +364,13 @@ function update () {
     }
   }
 
+  // Caída al vacío
   if (this.mario.y >= config.height) {
     this.mario.isDead = true;
+    if (this.bgMusic) this.bgMusic.stop();
     if (this.cache.audio.exists('gameover')) {
       this.sound.play('gameover');
     }
-    setTimeout(() => { this.scene.restart(); }, 2000);
+    setTimeout(() => { showGameOverMenu(this); }, 1000);
   }
 }
