@@ -44,10 +44,10 @@ function preload () {
   // --- ENEMIGO GOOMBA ---
   this.load.spritesheet('goomba', 'assets/entities/overworld/goomba.png', { frameWidth: 16, frameHeight: 16 })
 
-  // --- EFECTOS DE SONIDO (Asegúrate de tener estos archivos en tus carpetas) ---
+  // --- CORRECCIÓN DE RUTAS DE AUDIO ---
   this.load.audio('jump', 'assets/sound/effects/jump.mp3')
   this.load.audio('powerup', 'assets/sound/effects/powerup.mp3')
-  this.load.audio('kick', 'assets/sound/effects/kick.mp3') // Sonido al aplastar enemigo
+  this.load.audio('kick', 'assets/sound/effects/kick.mp3') 
   this.load.audio('gameover', 'assets/sound/music/gameover.mp3')
 }
 
@@ -135,10 +135,8 @@ function create () {
     .setCollideWorldBounds(true)
     .setGravityY(300)
     
-  // MODIFICADO: Jaiba inicial todavía más grande (Escala 0.08)
   this.mario.setScale(0.08) 
 
-  // Hitbox calibrada para la nueva escala chica 0.08
   this.mario.body.setSize(160, 220)
   this.mario.body.setOffset(56, 320)
   
@@ -176,12 +174,12 @@ function create () {
       mario.setVelocity(0, 0)
       mario.body.allowGravity = false 
       
-      // SONIDO: Efecto powerup al tomar el hongo
-      this.sound.play('powerup')
+      // SISTEMA DE SEGURIDAD AUDIO: Si no existe en caché por mala ruta, no congela el juego
+      if (this.sound.keys['powerup']) {
+        this.sound.play('powerup')
+      }
       
       mario.setTexture('jaiba-eating')
-      
-      // MODIFICADO: Escala al comer aumentada a la par (0.08)
       mario.setScale(0.08) 
       
       mario.body.setSize(160, 220)
@@ -194,8 +192,6 @@ function create () {
         mario.body.allowGravity = true 
         
         mario.setTexture('mario-grow')
-        
-        // Mantiene la jerarquía: Jaiba Gigante se queda en 0.12
         mario.setScale(0.12) 
         mario.y -= 35 
         
@@ -214,8 +210,9 @@ function create () {
     if (mario.body.touching.down && goombaHit.body.touching.up) {
       mario.setVelocityY(-180) 
       
-      // SONIDO: Efecto al aplastar al enemigo
-      this.sound.play('kick')
+      if (this.sound.keys['kick']) {
+        this.sound.play('kick')
+      }
       
       goombaHit.setVelocityX(0)
       goombaHit.body.enable = false
@@ -231,8 +228,6 @@ function create () {
       if (mario.isBig) {
         mario.isBig = false
         mario.setTexture('mario') 
-        
-        // Regresa a la nueva escala base de 0.08
         mario.setScale(0.08)
         
         mario.y -= 5
@@ -244,8 +239,9 @@ function create () {
       } else {
         mario.isDead = true
         
-        // SONIDO: Música/Sonido de muerte del Mario original
-        this.sound.play('gameover')
+        if (this.sound.keys['gameover']) {
+          this.sound.play('gameover')
+        }
         
         mario.setVelocity(0, -300)
         mario.setCollideWorldBounds(false)
@@ -285,15 +281,18 @@ function update () {
     this.mario.anims.play(idleKey, true) 
   }
 
-  // --- SONIDO DE SALTO ---
   if (this.keys.up.isDown && this.mario.body.touching.down) {
     this.mario.setVelocityY(-285)
-    this.sound.play('jump') // Ejecuta el audio de salto
+    if (this.sound.keys['jump']) {
+      this.sound.play('jump')
+    }
   }
 
   if (this.mario.y >= config.height) {
     this.mario.isDead = true
-    this.sound.play('gameover') // Sonido si cae al vacío
+    if (this.sound.keys['gameover']) {
+      this.sound.play('gameover')
+    }
     this.mario.setCollideWorldBounds(false)
     setTimeout(() => { this.scene.restart() }, 2000)
   }
