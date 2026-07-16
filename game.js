@@ -100,12 +100,11 @@ class TitleScene extends Phaser.Scene {
     const titleGoomba = this.add.sprite(215, height - 24, 'goomba').setDepth(10);
     titleGoomba.anims.play('goomba-walk-title', true);
 
-    // 7. LETRERO CON ESCALA AUTOMÁTICA
-    // Creamos el letrero y calculamos la escala exacta para que mida 145 píxeles de ancho
-    const logo = this.add.image(width / 2, 55, 'letrero').setDepth(10);
-    const targetWidth = 65; 
+   // 7. LETRERO ALINEADO A LA IZQUIERDA Y ARRIBA (Ajustado)
+    // Usamos x: 85 (más a la izquierda que el centro) e y: 40 (más arriba)
+    const logo = this.add.image(85, 40, 'letrero').setDepth(10);
+    const targetWidth = 115; // Lo hacemos un poco más pequeño para que quepa bien a la izquierda
     logo.setScale(targetWidth / logo.width);
-
     // 8. Texto de inicio
     const startText = this.add.text(width / 2, 175, 'PRESIONA ENTER', {
       fontFamily: '"Courier New", Courier, monospace',
