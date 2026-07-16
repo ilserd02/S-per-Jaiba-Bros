@@ -9,7 +9,7 @@ const config = {
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: { y: 300 },
+      gravity: { y: 350 }, // Aumentada ligeramente por el peso del nuevo tamaño
       debug: false 
     }
   },
@@ -46,7 +46,7 @@ function preload () {
   this.load.spritesheet('goomba', 'assets/entities/overworld/goomba.png', { frameWidth: 16, frameHeight: 16 });
 
   // --- EFECTOS DE SONIDO Y MÚSICA ---
-  this.load.audio('theme', 'assets/sound/music/overworld.mp3'); // Música constante de fondo
+  this.load.audio('theme', 'assets/sound/music/overworld.mp3'); 
   this.load.audio('jump', 'assets/sound/effects/jump.mp3');
   this.load.audio('powerup', 'assets/sound/effects/powerup.mp3');
   this.load.audio('kick', 'assets/sound/effects/kick.mp3'); 
@@ -56,7 +56,7 @@ function preload () {
 }
 
 function create () {
-  // --- INICIAR MÚSICA DE FONDO EN BUCLE ---
+  // --- INICIAR MÚSICA DE FONDO ---
   if (this.cache.audio.exists('theme') && !this.sound.get('theme')) {
     this.bgMusic = this.sound.add('theme', { loop: true, volume: 0.5 });
     this.bgMusic.play();
@@ -64,20 +64,23 @@ function create () {
     this.bgMusic.play();
   }
 
-  this.add.image(100, 50, 'cloud1').setOrigin(0, 0).setScale(0.15);
+  // Nube más grande para hacer juego
+  this.add.image(100, 30, 'cloud1').setOrigin(0, 0).setScale(0.25);
 
   this.floor = this.physics.add.staticGroup();
 
-  // --- GENERACIÓN DEL SUELO ---
-  for (let x = 0; x < 2000; x += 16) {
-    if (x >= 600 && x <= 680) continue;
-    this.floor.create(x, config.height - 16, 'floorbricks').setOrigin(0, 0.5).refreshBody();
+  // --- GENERACIÓN DEL SUELO (Escalado al doble: de 16px a 32px de ancho) ---
+  for (let x = 0; x < 3000; x += 32) {
+    if (x >= 700 && x <= 820) continue; // Hueco adaptado
+    const block = this.floor.create(x, config.height - 32, 'floorbricks').setOrigin(0, 0);
+    block.setScale(2); // Suelo el doble de grande
+    block.refreshBody();
   }
 
-  // --- TUBERÍAS ---
-  this.floor.create(500, config.height - 32, 'tube-small').setOrigin(0.5, 0.5).refreshBody();
-  this.floor.create(580, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).refreshBody();
-  this.floor.create(700, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).refreshBody();
+  // --- TUBERÍAS ESCALADAS (Crecidas proporcionalmente) ---
+  this.floor.create(500, config.height - 64, 'tube-small').setOrigin(0.5, 0).setScale(1.8).refreshBody();
+  this.floor.create(620, config.height - 80, 'tube-medium').setOrigin(0.5, 0).setScale(1.8).refreshBody();
+  this.floor.create(860, config.height - 96, 'tube-large').setOrigin(0.5, 0).setScale(1.8).refreshBody();
 
   // --- ANIMACIONES DEL ENTORNO Y ENEMIGOS ---
   this.anims.create({
@@ -88,9 +91,12 @@ function create () {
   });
 
   this.mysteryBoxes = this.physics.add.staticGroup();
-  const box = this.mysteryBoxes.create(80, config.height - 90, 'mysteryBox').setOrigin(0, 0.5).refreshBody();
+  // Caja misteriosa duplicada en tamaño
+  const box = this.mysteryBoxes.create(120, config.height - 140, 'mysteryBox').setOrigin(0, 0);
+  box.setScale(2); 
   box.hasItem = true;
   box.anims.play('box-shine', true);
+  box.refreshBody();
 
   this.mushrooms = this.physics.add.group();
   this.goombas = this.physics.add.group();
@@ -102,7 +108,9 @@ function create () {
     repeat: -1
   });
 
-  const goomba1 = this.goombas.create(350, config.height - 60, 'goomba').setOrigin(0.5, 0.5);
+  // --- GOOMBA MÁS GRANDE ---
+  const goomba1 = this.goombas.create(400, config.height - 64, 'goomba').setOrigin(0.5, 0.5);
+  goomba1.setScale(1.8); // Ajustado al tamaño de la nueva jaiba
   goomba1.setVelocityX(-40);
   goomba1.setCollideWorldBounds(true);
 
@@ -149,7 +157,7 @@ function create () {
   this.mario = this.physics.add.sprite(50, 100, 'mario')
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
-    .setGravityY(300);
+    .setGravityY(350);
     
   this.mario.setScale(0.14); 
 
@@ -179,8 +187,10 @@ function create () {
           this.sound.play('sprout');
         }
 
-        const mushroom = this.mushrooms.create(boxHit.x + 8, boxHit.y - 18, 'mushroom');
+        // Hongo escalado a 1.8 para no verse pequeño
+        const mushroom = this.mushrooms.create(boxHit.x + 16, boxHit.y - 24, 'mushroom');
         mushroom.setOrigin(0.5, 0.5);
+        mushroom.setScale(1.8);
         mushroom.setVelocityX(50); 
       } else {
         if (this.cache.audio.exists('bump')) {
@@ -238,7 +248,7 @@ function create () {
     if (mario.isEating || mario.isDead) return;
     
     if (mario.body.touching.down && goombaHit.body.touching.up) {
-      mario.setVelocityY(-180); 
+      mario.setVelocityY(-200); 
       
       if (this.cache.audio.exists('kick')) {
         this.sound.play('kick');
@@ -265,12 +275,9 @@ function create () {
         mario.body.setOffset(56, 300);
         mario.body.reset(mario.x, mario.y);
         
-        goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30;
+        goombaHit.x += (goombaHit.x > mario.x) ? 40 : -40;
       } else {
-        // --- PROCESO DE MUERTE DE LA JAIBA ---
         mario.isDead = true;
-        
-        // Pausar música principal
         if (this.bgMusic) this.bgMusic.stop();
 
         mario.body.allowGravity = false;
@@ -292,7 +299,6 @@ function create () {
           duration: 800, 
           ease: 'Linear',
           onComplete: () => {
-            // Llama a la función para mostrar el menú de reintento
             showGameOverMenu(this);
           }
         });
@@ -306,9 +312,7 @@ function create () {
   this.keys = this.input.keyboard.createCursorKeys();
 }
 
-// --- FUNCIÓN PARA MOSTRAR EL BOTÓN INTERACTIVO AL MORIR ---
 function showGameOverMenu (scene) {
-  // Obtenemos el centro de la cámara actual para que el botón aparezca visible en pantalla
   const camX = scene.cameras.main.scrollX + (config.width / 2);
   const camY = config.height / 2;
 
@@ -322,11 +326,9 @@ function showGameOverMenu (scene) {
 
   retryButton.setInteractive({ useHandCursor: true });
 
-  // Efectos visuales al pasar el mouse por encima
   retryButton.on('pointerover', () => retryButton.setStyle({ fill: '#ff0000' }));
   retryButton.on('pointerout', () => retryButton.setStyle({ fill: '#ffffff' }));
 
-  // Acción al hacer clic: reiniciar escena
   retryButton.on('pointerdown', () => {
     scene.scene.restart();
   });
@@ -357,14 +359,14 @@ function update () {
     this.mario.anims.play(idleKey, true); 
   }
 
+  // Fuerza de salto ligeramente superior debido al tamaño de los elementos del mapa
   if (this.keys.up.isDown && this.mario.body.touching.down) {
-    this.mario.setVelocityY(-285);
+    this.mario.setVelocityY(-310);
     if (this.cache.audio.exists('jump')) {
       this.sound.play('jump');
     }
   }
 
-  // Caída al vacío
   if (this.mario.y >= config.height) {
     this.mario.isDead = true;
     if (this.bgMusic) this.bgMusic.stop();
