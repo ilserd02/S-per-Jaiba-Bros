@@ -10,8 +10,6 @@ class TitleScene extends Phaser.Scene {
     // Cargamos los elementos para la portada y el fondo del juego
     this.load.image('letrero', 'assets/scenery/letrero.png'); 
     this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png');
-    
-    // Ruta correcta verificada para mario-feli
     this.load.image('mario-feli', 'assets/scenery/mario-feli.png'); 
 
     // Assets de escenario reales (obtenidos de tu carpeta)
@@ -33,7 +31,7 @@ class TitleScene extends Phaser.Scene {
     this.load.spritesheet('mario-dead', 'assets/entities/mario-dead.png', { frameWidth: 273, frameHeight: 547 });
     this.load.spritesheet('goomba', 'assets/entities/overworld/goomba.png', { frameWidth: 16, frameHeight: 16 });
 
-    // Sonidos
+    // Sonidos (Rutas ajustadas de manera segura)
     this.load.audio('theme', 'assets/sound/music/overworld.mp3');
     this.load.audio('jump', 'assets/sound/effects/jump.mp3');
     this.load.audio('kick', 'assets/sound/effects/kick.mp3');
@@ -57,7 +55,7 @@ class TitleScene extends Phaser.Scene {
       this.add.image(220, 45, 'cloud1').setOrigin(0.5).setScale(0.11).setAlpha(0.95).setDepth(1);
     }
 
-    // --- MONTAÑAS Y ARBUSTOS EN LA PORTADA (POR DETRÁS DE LOS BLOQUES DE SUELO) ---
+    // --- MONTAÑAS Y ARBUSTOS EN LA PORTADA ---
     if (this.textures.exists('mountain1')) {
       this.add.image(45, height - 16, 'mountain1').setOrigin(0.5, 1).setScale(0.15).setDepth(1);
     }
@@ -68,18 +66,17 @@ class TitleScene extends Phaser.Scene {
       this.add.image(110, height - 16, 'bush1').setOrigin(0.5, 1).setScale(0.12).setDepth(1);
     }
 
-    // Suelo inferior de la portada (Por delante del escenario)
+    // Suelo inferior de la portada (setDepth(2) para que esté encima de las montañas)
     for (let x = 0; x < width + 16; x += 16) {
       this.add.image(x, height - 8, 'floorbricks').setDepth(2);
     }
 
-    // --- MARIO-FELI SALTANDO A LA DERECHA Y ELEVADO ---
+    // --- MARIO-FELI SALTANDO EN PORTADA ---
     if (this.textures.exists('mario-feli')) {
       this.add.image(180, height - 75, 'mario-feli') 
         .setOrigin(0.5, 0.5) 
         .setScale(0.163) 
-        .setDepth(10)
-        .setFlipX(false); 
+        .setDepth(10); 
     }
 
     // Letrero centrado
@@ -88,7 +85,7 @@ class TitleScene extends Phaser.Scene {
       logo.setScale(180 / logo.width);
     }
 
-    // Texto de inicio "PRESS ENTER TO START"
+    // Texto de inicio
     const startText = this.add.text(width / 2, height / 2 + 35, 'PRESS ENTER TO START', {
       fontFamily: '"Courier New", Courier, monospace',
       fontSize: '10px',
@@ -96,7 +93,7 @@ class TitleScene extends Phaser.Scene {
       fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(10);
 
-    // Parpadeo del texto
+    // Parpadeo
     this.tweens.add({
       targets: startText,
       alpha: 0,
@@ -105,7 +102,7 @@ class TitleScene extends Phaser.Scene {
       repeat: -1
     });
 
-    // Iniciar juego con Enter
+    // Cambiar de escena
     this.input.keyboard.once('keydown-ENTER', () => {
       this.scene.start('GameScene');
     });
@@ -129,11 +126,10 @@ class GameScene extends Phaser.Scene {
       this.bgMusic.play();
     }
 
-    // Fondo azul claro del cielo en juego
+    // Fondo azul cielo claro
     this.cameras.main.setBackgroundColor('#a9d0f5'); 
 
-    // --- ESCENARIO DE FONDO REPETIDO (POR DETRÁS DE TODO) ---
-    // Colocamos montañas, nubes y arbustos distribuidos a lo largo del nivel (eje X de 0 a 2000 px)
+    // --- ESCENARIO DE FONDO REPETIDO (setDepth(1) - Por detrás de las plataformas y el jugador) ---
     for (let x = 80; x < 2000; x += 280) {
       if (this.textures.exists('mountain1')) {
         this.add.image(x, height - 16, 'mountain1').setOrigin(0.5, 1).setScale(0.15).setDepth(1);
@@ -153,7 +149,7 @@ class GameScene extends Phaser.Scene {
 
     this.floor = this.physics.add.staticGroup();
 
-    // Generación del suelo (Por encima de las montañas por su setDepth(2))
+    // Suelo (setDepth(2) para estar por delante de las montañas)
     for (let x = 0; x < 2000; x += 16) {
       if (x >= 600 && x <= 680) continue;
       this.floor.create(x, config.height - 16, 'floorbricks').setOrigin(0, 0.5).setDepth(2).refreshBody();
@@ -164,7 +160,7 @@ class GameScene extends Phaser.Scene {
     this.floor.create(580, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).setDepth(2).refreshBody();
     this.floor.create(700, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).setDepth(2).refreshBody();
 
-    // Creación segura de animaciones
+    // Animación de los bloques de misterio
     if (!this.anims.exists('box-shine') && this.textures.exists('mysteryBox')) {
       this.anims.create({
         key: 'box-shine',
@@ -249,7 +245,7 @@ class GameScene extends Phaser.Scene {
       });
     }
 
-    // Creación del jugador (Por encima de todo)
+    // Creación de Mario (Jugador)
     this.mario = this.physics.add.sprite(50, 100, 'mario')
       .setOrigin(0.5, 0.5)
       .setCollideWorldBounds(true)
@@ -270,7 +266,7 @@ class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.mushrooms, this.floor);
     this.physics.add.collider(this.goombas, this.floor);
 
-    // Colisión con bloques
+    // Colisión con bloques de misterio
     this.physics.add.collider(this.mario, this.mysteryBoxes, (mario, boxHit) => {
       if (mario.body.touching.up) {
         if (boxHit.hasItem) {
@@ -365,3 +361,142 @@ class GameScene extends Phaser.Scene {
         } else {
           mario.isDead = true;
           if (this.bgMusic) this.bgMusic.stop();
+
+          mario.body.allowGravity = false;
+          mario.body.setVelocity(0, 0);
+          mario.body.enable = false; 
+          
+          if (this.cache.audio.exists('gameover')) {
+            this.sound.play('gameover');
+          }
+          
+          if (this.textures.exists('mario-dead') && this.anims.exists('jaiba-dead')) {
+            mario.setTexture('mario-dead');
+            mario.setScale(0.175); 
+            mario.anims.play('jaiba-dead');
+          }
+
+          this.tweens.add({
+            targets: mario,
+            alpha: 0,
+            delay: 1000, 
+            duration: 800, 
+            ease: 'Linear',
+            onComplete: () => {
+              showGameOverMenu(this);
+            }
+          });
+        }
+      }
+    });
+
+    this.cameras.main.setBounds(0, 0, 2000, config.height);
+    this.cameras.main.startFollow(this.mario);
+
+    this.keys = this.input.keyboard.createCursorKeys();
+  }
+
+  convertirEnGrande(mario) {
+    mario.isBig = true;
+    mario.isEating = false;
+    mario.body.allowGravity = true; 
+    
+    if (this.cache.audio.exists('powerup')) {
+      this.sound.play('powerup');
+    }
+
+    if (this.textures.exists('mario-grow')) {
+      mario.setTexture('mario-grow');
+      mario.setScale(0.187); 
+    }
+    mario.y -= 30; 
+    
+    mario.body.setSize(160, 180);
+    mario.body.setOffset(56, 360);
+    mario.body.reset(mario.x, mario.y);
+  }
+
+  update() {
+    this.goombas.children.iterate(goomba => {
+      if (goomba && goomba.body && goomba.body.enable && this.anims.exists('goomba-walk')) {
+        goomba.anims.play('goomba-walk', true);
+      }
+    });
+
+    if (this.mario.isDead || this.mario.isEating) return;
+
+    const walkKey = (this.mario.isBig && this.anims.exists('jaiba-big-walk')) ? 'jaiba-big-walk' : 'jaiba-walk';
+    const idleKey = (this.mario.isBig && this.anims.exists('jaiba-big-idle')) ? 'jaiba-big-idle' : 'jaiba-idle';
+
+    if (this.keys.left.isDown) {
+      this.mario.setVelocityX(-120); 
+      if (this.anims.exists(walkKey)) this.mario.anims.play(walkKey, true); 
+      this.mario.flipX = true;
+    } else if (this.keys.right.isDown) {
+      this.mario.setVelocityX(120);  
+      if (this.anims.exists(walkKey)) this.mario.anims.play(walkKey, true); 
+      this.mario.flipX = false;
+    } else {
+      this.mario.setVelocityX(0);     
+      if (this.anims.exists(idleKey)) this.mario.anims.play(idleKey, true); 
+    }
+
+    if (this.keys.up.isDown && this.mario.body.touching.down) {
+      this.mario.setVelocityY(-300);
+      if (this.cache.audio.exists('jump')) {
+        this.sound.play('jump');
+      }
+    }
+
+    if (this.mario.y >= config.height) {
+      this.mario.isDead = true;
+      if (this.bgMusic) this.bgMusic.stop();
+      if (this.cache.audio.exists('gameover')) {
+        this.sound.play('gameover');
+      }
+      setTimeout(() => { showGameOverMenu(this); }, 1000);
+    }
+  }
+}
+
+// --- MENÚ GAME OVER ---
+function showGameOverMenu(scene) {
+  const camX = scene.cameras.main.scrollX + (config.width / 2);
+  const camY = config.height / 2;
+
+  const retryButton = scene.add.text(camX, camY, '¿Volver a intentar?', {
+    fontFamily: 'Arial',
+    fontSize: '14px',
+    fill: '#ffffff',
+    backgroundColor: '#000000',
+    padding: { x: 8, y: 4 }
+  }).setOrigin(0.5);
+
+  retryButton.setInteractive({ useHandCursor: true });
+
+  retryButton.on('pointerover', () => retryButton.setStyle({ fill: '#ff0000' }));
+  retryButton.on('pointerout', () => retryButton.setStyle({ fill: '#ffffff' }));
+
+  retryButton.on('pointerdown', () => {
+    scene.scene.restart();
+  });
+}
+
+// --- CONFIGURACIÓN GLOBAL ---
+const config = {
+  type: Phaser.AUTO,
+  width: 256,
+  height: 244,
+  backgroundColor: '#a9d0f5', // Azul cielo claro por defecto
+  parent: 'game',
+  physics: {
+    default: 'arcade',
+    arcade: {
+      gravity: { y: 300 },
+      debug: false 
+    }
+  },
+  scene: [TitleScene, GameScene]
+};
+
+new Phaser.Game(config);
