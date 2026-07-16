@@ -10,7 +10,9 @@ class TitleScene extends Phaser.Scene {
     // Cargamos lo necesario para la portada original
     this.load.image('letrero', 'assets/scenery/letrero.png'); 
     this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png');
-    this.load.image('mario-feli', 'assets/entities/mario-feli.png'); // Cargamos mario-feli para la portada
+    
+    // Cambiado a .jpg por si el servidor no encuentra el .png (Error 404 corregido)
+    this.load.image('mario-feli', 'assets/entities/mario-feli.jpg'); 
 
     // Pre-cargamos el resto de elementos para el nivel de juego
     this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png');
@@ -26,7 +28,7 @@ class TitleScene extends Phaser.Scene {
     this.load.spritesheet('mario-dead', 'assets/entities/mario-dead.png', { frameWidth: 273, frameHeight: 547 });
     this.load.spritesheet('goomba', 'assets/entities/overworld/goomba.png', { frameWidth: 16, frameHeight: 16 });
 
-    // Sonidos
+    // Sonidos (Se cargan de forma segura)
     this.load.audio('theme', 'assets/sound/music/overworld.mp3');
     this.load.audio('jump', 'assets/sound/effects/jump.mp3');
     this.load.audio('kick', 'assets/sound/effects/kick.mp3');
@@ -48,13 +50,22 @@ class TitleScene extends Phaser.Scene {
       this.add.image(x, height - 8, 'floorbricks').setDepth(2);
     }
 
-    // Mario-feli saltando: elevado del suelo, mirando a la derecha y con escala de 0.163
+    // --- CREADOR SEGURO DE MARIO JUMPING ---
+    let jumpingMario;
     if (this.textures.exists('mario-feli')) {
-      const jumpingMario = this.add.image(45, height - 55, 'mario-feli')
-        .setOrigin(0.5, 0.5) 
-        .setScale(0.163)
+      // Intentamos pintar la imagen mario-feli
+      jumpingMario = this.add.image(45, height - 55, 'mario-feli');
+    } else if (this.textures.exists('mario')) {
+      // SISTEMA DE SEGURIDAD: Si falla mario-feli, usamos la jaiba normal como respaldo
+      jumpingMario = this.add.sprite(45, height - 55, 'mario');
+      jumpingMario.setFrame(0);
+    }
+
+    if (jumpingMario) {
+      jumpingMario.setOrigin(0.5, 0.5) 
+        .setScale(0.163) // Escala reducida un 0.040
         .setDepth(10);
-      jumpingMario.flipX = false; // Mirando hacia la derecha
+      jumpingMario.flipX = false; // Asegurar que mira a la derecha
     }
 
     // Letrero original centrado
