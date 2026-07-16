@@ -1,6 +1,6 @@
 /* global Phaser */
 
-// --- NUEVA ESCENA: PANTALLA DE TÍTULO ---
+// --- ESCENA DE LA PORTADA / PANTALLA DE TÍTULO ---
 class TitleScene extends Phaser.Scene {
   constructor() {
     super({ key: 'TitleScene' });
@@ -10,8 +10,9 @@ class TitleScene extends Phaser.Scene {
     // Fondos y decoraciones
     this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png');
     this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png');
-    this.load.image('mountain', 'assets/scenery/overworld/mountain.png'); // Si tienes la montaña, si no se dibuja plano
-    this.load.image('bush', 'assets/scenery/overworld/bush.png'); // Arbustos
+    
+    // CARGAR EL LETRERO OFICIAL
+    this.load.image('letrero', 'assets/letrero.png'); 
 
     // Bloques e Items
     this.load.spritesheet('mysteryBox', 'assets/blocks/overworld/misteryBlock.png', { frameWidth: 16, frameHeight: 16 });
@@ -31,120 +32,90 @@ class TitleScene extends Phaser.Scene {
     // 1. Fondo azul cielo pálido
     this.cameras.main.setBackgroundColor('#92a1fc'); 
 
-    // 2. Nubes (Tres en la parte superior izquierda, una a la derecha, una abajo a la izquierda)
+    // 2. Nubes en el fondo
     this.add.image(20, 30, 'cloud1').setScale(0.08).setAlpha(0.9);
     this.add.image(55, 25, 'cloud1').setScale(0.08).setAlpha(0.9);
     this.add.image(90, 35, 'cloud1').setScale(0.08).setAlpha(0.9);
     this.add.image(210, 40, 'cloud1').setScale(0.08).setAlpha(0.9);
     this.add.image(35, 120, 'cloud1').setScale(0.08).setAlpha(0.9);
 
-    // 3. Suelo de ladrillo marrón
-    this.floorGroup = this.add.group();
-    for (let x = 0; x < width + 16; x += 16) {
-      this.floorGroup.create(x, height - 8, 'floorbricks');
-    }
-
-    // 4. Montaña verde y arbustos en el fondo
-    // Representación simplificada de la montaña verde con gráficos si no está el asset exacto
+    // 3. Montañas y Arbustos (Se crean ANTES del suelo para que queden por DETRÁS)
     const mountainGeom = this.add.graphics();
-    mountainGeom.fillStyle(0x00a800, 1); // Verde oscuro de 8-bits
+    mountainGeom.fillStyle(0x00a800, 1); // Verde oscuro retro
     mountainGeom.beginPath();
-    mountainGeom.moveTo(140, height - 16);
+    // La base entra un poco dentro del área del suelo (height - 16 es la superficie del suelo)
+    mountainGeom.moveTo(140, height - 8); 
     mountainGeom.lineTo(165, height - 55);
-    mountainGeom.lineTo(190, height - 16);
+    mountainGeom.lineTo(190, height - 8);
     mountainGeom.closePath();
     mountainGeom.fillPath();
 
-    // Puntos negros decorativos en la montaña
+    // Detalles decorativos de la montaña verde
     mountainGeom.fillStyle(0x000000, 1);
     mountainGeom.fillRect(160, height - 30, 2, 2);
     mountainGeom.fillRect(170, height - 40, 2, 2);
     mountainGeom.fillRect(152, height - 24, 2, 2);
 
-    // Dos pequeños arbustos verdes al lado
+    // Arbusto delante de la montaña pero detrás del piso
     const bush1 = this.add.graphics();
-    bush1.fillStyle(0x00fc00, 1); // Verde claro
-    bush1.fillEllipse(130, height - 22, 16, 12);
-    bush1.fillEllipse(142, height - 22, 14, 10);
+    bush1.fillStyle(0x00fc00, 1); // Verde brillante
+    bush1.fillEllipse(130, height - 18, 16, 12);
+    bush1.fillEllipse(142, height - 18, 14, 10);
 
-    // 5. Decoraciones flotantes (Bloques de preguntas "?")
-    this.anims.create({
-      key: 'box-shine-title',
-      frames: this.anims.generateFrameNumbers('mysteryBox', { start: 0, end: 2 }),
-      frameRate: 6,
-      repeat: -1
-    });
+    // 4. Suelo de bloques de ladrillo marrón (Se crean DESPUÉS, cubriendo la base de la montaña)
+    this.floorGroup = this.add.group();
+    for (let x = 0; x < width + 16; x += 16) {
+      // Dibujamos el bloque centrado en el borde inferior para tapar perfectamente las bases
+      this.floorGroup.create(x, height - 8, 'floorbricks');
+    }
 
-    // Bloque solitario amarillo bajo el cartel
-    const centerBox = this.add.sprite(width / 2, 115, 'mysteryBox');
+    // 5. Bloques de preguntas "?" animados
+    if (!this.anims.exists('box-shine-title')) {
+      this.anims.create({
+        key: 'box-shine-title',
+        frames: this.anims.generateFrameNumbers('mysteryBox', { start: 0, end: 2 }),
+        frameRate: 6,
+        repeat: -1
+      });
+    }
+
+    // Bloque misterioso del centro bajado ligeramente
+    const centerBox = this.add.sprite(width / 2, 125, 'mysteryBox');
     centerBox.anims.play('box-shine-title', true);
 
-    // Bloque de ladrillo/pregunta flotando arriba a la derecha
-    const rightBox = this.add.sprite(220, 75, 'mysteryBox');
+    // Bloque misterioso de arriba a la derecha bajado un poco (antes en y:75, ahora en y:95)
+    const rightBox = this.add.sprite(220, 95, 'mysteryBox');
     rightBox.anims.play('box-shine-title', true);
 
-    // 6. Personajes estáticos / decorativos en pantalla
-    // Jaiba pequeña (0.131) mirando a la derecha
-    const titleJaiba = this.add.sprite(45, height - 28, 'mario').setScale(0.131);
-    titleJaiba.setFrame(0); // Pose idle mirando a la derecha
+    // 6. Jaiba posicionada pisando el suelo de forma precisa
+    // Ajustado el eje Y a (height - 35) para que coincida perfectamente con el plano del suelo
+    const titleJaiba = this.add.sprite(45, height - 35, 'mario').setScale(0.131);
+    titleJaiba.setFrame(0); // Pose quieta mirando hacia la derecha
 
-    // Goomba caminando hacia la izquierda
-    this.anims.create({
-      key: 'goomba-walk-title',
-      frames: this.anims.generateFrameNumbers('goomba', { start: 0, end: 1 }),
-      frameRate: 4,
-      repeat: -1
-    });
+    // Goomba posicionado en el suelo caminando
+    if (!this.anims.exists('goomba-walk-title')) {
+      this.anims.create({
+        key: 'goomba-walk-title',
+        frames: this.anims.generateFrameNumbers('goomba', { start: 0, end: 1 }),
+        frameRate: 4,
+        repeat: -1
+      });
+    }
     const titleGoomba = this.add.sprite(215, height - 24, 'goomba');
     titleGoomba.anims.play('goomba-walk-title', true);
 
-    // 7. GRAN LETRERO RECTANGULAR DE COLOR NARANJA ("SUPER JAIBA BROS.")
-    const bannerWidth = 190;
-    const bannerHeight = 45;
-    const bannerX = (width - bannerWidth) / 2;
-    const bannerY = 25;
+    // 7. COLOCAR EL LOGO OFICIAL DESDE EL ASSET "letrero.png"
+    // Lo posicionamos centrado horizontalmente tirando un poco a la izquierda y con una escala similar
+    this.add.image(width / 2 - 8, 45, 'letrero').setScale(0.65);
 
-    const rectGraphics = this.add.graphics();
-    // Borde negro exterior
-    rectGraphics.fillStyle(0x000000, 1);
-    rectGraphics.fillRect(bannerX - 2, bannerY - 2, bannerWidth + 4, bannerHeight + 4);
-    // Fondo Naranja
-    rectGraphics.fillStyle(0xfc9838, 1);
-    rectGraphics.fillRect(bannerX, bannerY, bannerWidth, bannerHeight);
-
-    // Puntos negros en las esquinas del borde naranja
-    rectGraphics.fillStyle(0x000000, 1);
-    rectGraphics.fillRect(bannerX + 2, bannerY + 2, 3, 3); // Arriba Izq
-    rectGraphics.fillRect(bannerX + bannerWidth - 5, bannerY + 2, 3, 3); // Arriba Der
-    rectGraphics.fillRect(bannerX + 2, bannerY + bannerHeight - 5, 3, 3); // Abajo Izq
-    rectGraphics.fillRect(bannerX + bannerWidth - 5, bannerY + bannerHeight - 5, 3, 3); // Abajo Der
-
-    // Texto del Título: "SUPER JAIBA BROS."
-    this.add.text(width / 2 + 1, bannerY + 15 + 1, 'SUPER JAIBA BROS.', {
+    // 8. Mensaje intermitente "PRESIONA ENTER"
+    const startText = this.add.text(width / 2, 175, 'PRESIONA ENTER', {
       fontFamily: '"Courier New", Courier, monospace',
-      fontSize: '15px',
-      fontStyle: 'bold',
-      fill: '#000000', // Sombra negra
-      align: 'center'
-    }).setOrigin(0.5);
-
-    this.add.text(width / 2, bannerY + 15, 'SUPER JAIBA BROS.', {
-      fontFamily: '"Courier New", Courier, monospace',
-      fontSize: '15px',
-      fontStyle: 'bold',
-      fill: '#ffffff', // Texto blanco
-      align: 'center'
-    }).setOrigin(0.5);
-
-    // 8. Mensaje de interacción para empezar
-    const startText = this.add.text(width / 2, 160, 'PRESIONA ENTER', {
-      fontFamily: 'Arial',
       fontSize: '10px',
       fill: '#ffffff',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    // Parpadeo del texto
     this.tweens.add({
       targets: startText,
       alpha: 0,
@@ -153,21 +124,21 @@ class TitleScene extends Phaser.Scene {
       repeat: -1
     });
 
-    // 9. Input para saltar al juego principal
+    // 9. Tecla Enter para iniciar el juego
     this.input.keyboard.once('keydown-ENTER', () => {
       this.scene.start('GameScene');
     });
   }
 }
 
-// --- ESCENA DE JUEGO PRINCIPAL (Tu escena actual adaptada) ---
+// --- ESCENA DEL JUEGO PRINCIPAL ---
 class GameScene extends Phaser.Scene {
   constructor() {
     super({ key: 'GameScene' });
   }
 
   create() {
-    // --- INICIAR MÚSICA DE FONDO ---
+    // Activar música del Overworld si no está sonando
     if (this.cache.audio.exists('theme') && !this.sound.get('theme')) {
       this.bgMusic = this.sound.add('theme', { loop: true, volume: 0.5 });
       this.bgMusic.play();
@@ -179,24 +150,26 @@ class GameScene extends Phaser.Scene {
 
     this.floor = this.physics.add.staticGroup();
 
-    // --- GENERACIÓN DEL SUELO ---
+    // Generar suelo del juego
     for (let x = 0; x < 2000; x += 16) {
       if (x >= 600 && x <= 680) continue;
       this.floor.create(x, config.height - 16, 'floorbricks').setOrigin(0, 0.5).refreshBody();
     }
 
-    // --- TUBERÍAS ---
+    // Tuberías
     this.floor.create(500, config.height - 32, 'tube-small').setOrigin(0.5, 0.5).refreshBody();
     this.floor.create(580, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).refreshBody();
     this.floor.create(700, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).refreshBody();
 
-    // --- ANIMACIONES DEL ENTORNO Y ENEMIGOS ---
-    this.anims.create({
-      key: 'box-shine',
-      frames: this.anims.generateFrameNumbers('mysteryBox', { start: 0, end: 2 }),
-      frameRate: 6,
-      repeat: -1
-    });
+    // Bloques misteriosos animados
+    if (!this.anims.exists('box-shine')) {
+      this.anims.create({
+        key: 'box-shine',
+        frames: this.anims.generateFrameNumbers('mysteryBox', { start: 0, end: 2 }),
+        frameRate: 6,
+        repeat: -1
+      });
+    }
 
     this.mysteryBoxes = this.physics.add.staticGroup();
     const box = this.mysteryBoxes.create(80, config.height - 90, 'mysteryBox').setOrigin(0, 0.5).refreshBody();
@@ -206,57 +179,71 @@ class GameScene extends Phaser.Scene {
     this.mushrooms = this.physics.add.group();
     this.goombas = this.physics.add.group();
 
-    this.anims.create({
-      key: 'goomba-walk',
-      frames: this.anims.generateFrameNumbers('goomba', { start: 0, end: 1 }),
-      frameRate: 5,
-      repeat: -1
-    });
+    if (!this.anims.exists('goomba-walk')) {
+      this.anims.create({
+        key: 'goomba-walk',
+        frames: this.anims.generateFrameNumbers('goomba', { start: 0, end: 1 }),
+        frameRate: 5,
+        repeat: -1
+      });
+    }
 
     const goomba1 = this.goombas.create(350, config.height - 60, 'goomba').setOrigin(0.5, 0.5);
     goomba1.setVelocityX(-40);
     goomba1.setCollideWorldBounds(true);
 
-    // --- ANIMACIONES DE LA JAIBA ---
-    this.anims.create({
-      key: 'jaiba-walk',
-      frames: this.anims.generateFrameNumbers('mario', { start: 1, end: 3 }),
-      frameRate: 10,
-      repeat: -1
-    });
+    // Animaciones del jugador (Jaiba)
+    if (!this.anims.exists('jaiba-walk')) {
+      this.anims.create({
+        key: 'jaiba-walk',
+        frames: this.anims.generateFrameNumbers('mario', { start: 1, end: 3 }),
+        frameRate: 10,
+        repeat: -1
+      });
+    }
 
-    this.anims.create({
-      key: 'jaiba-idle',
-      frames: [{ key: 'mario', frame: 0 }]
-    });
+    if (!this.anims.exists('jaiba-idle')) {
+      this.anims.create({
+        key: 'jaiba-idle',
+        frames: [{ key: 'mario', frame: 0 }]
+      });
+    }
 
-    this.anims.create({
-      key: 'jaiba-big-walk',
-      frames: this.anims.generateFrameNumbers('mario-grow', { start: 1, end: 3 }),
-      frameRate: 10,
-      repeat: -1
-    });
+    if (!this.anims.exists('jaiba-big-walk')) {
+      this.anims.create({
+        key: 'jaiba-big-walk',
+        frames: this.anims.generateFrameNumbers('mario-grow', { start: 1, end: 3 }),
+        frameRate: 10,
+        repeat: -1
+      });
+    }
 
-    this.anims.create({
-      key: 'jaiba-big-idle',
-      frames: [{ key: 'mario-grow', frame: 0 }]
-    });
+    if (!this.anims.exists('jaiba-big-idle')) {
+      this.anims.create({
+        key: 'jaiba-big-idle',
+        frames: [{ key: 'mario-grow', frame: 0 }]
+      });
+    }
 
-    this.anims.create({
-      key: 'jaiba-eat-mushroom',
-      frames: this.anims.generateFrameNumbers('jaiba-eating', { start: 0, end: 5 }),
-      frameRate: 6,
-      repeat: 0
-    });
+    if (!this.anims.exists('jaiba-eat-mushroom')) {
+      this.anims.create({
+        key: 'jaiba-eat-mushroom',
+        frames: this.anims.generateFrameNumbers('jaiba-eating', { start: 0, end: 5 }),
+        frameRate: 6,
+        repeat: 0
+      });
+    }
 
-    this.anims.create({
-      key: 'jaiba-dead',
-      frames: this.anims.generateFrameNumbers('mario-dead', { start: 0, end: 5 }),
-      frameRate: 4,
-      repeat: 0
-    });
+    if (!this.anims.exists('jaiba-dead')) {
+      this.anims.create({
+        key: 'jaiba-dead',
+        frames: this.anims.generateFrameNumbers('mario-dead', { start: 0, end: 5 }),
+        frameRate: 4,
+        repeat: 0
+      });
+    }
 
-    // --- CREACIÓN DEL JUGADOR (Escala ajustada a 0.131) ---
+    // Crear al jugador
     this.mario = this.physics.add.sprite(50, 100, 'mario')
       .setOrigin(0.5, 0.5)
       .setCollideWorldBounds(true)
@@ -277,7 +264,7 @@ class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.mushrooms, this.floor);
     this.physics.add.collider(this.goombas, this.floor);
 
-    // Golpear bloque misterioso
+    // Colisión con los bloques sorpresa
     this.physics.add.collider(this.mario, this.mysteryBoxes, (mario, boxHit) => {
       if (mario.body.touching.up) {
         if (boxHit.hasItem) {
@@ -301,7 +288,7 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    // --- LÓGICA DE ALIMENTACIÓN ---
+    // Evento de comer hongo
     this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
       if (mario.isEating || mario.isDead) return;
       
@@ -344,7 +331,7 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    // --- LÓGICA DE INTERACCIÓN GOOMBA ---
+    // Colisión con enemigos
     this.physics.add.collider(this.mario, this.goombas, (mario, goombaHit) => {
       if (mario.isEating || mario.isDead) return;
       
@@ -456,7 +443,7 @@ class GameScene extends Phaser.Scene {
   }
 }
 
-// --- MENÚ DE REINTENTAR ---
+// --- MENÚ DE JUEGO TERMINADO ---
 function showGameOverMenu (scene) {
   const camX = scene.cameras.main.scrollX + (config.width / 2);
   const camY = config.height / 2;
@@ -493,7 +480,7 @@ const config = {
       debug: false 
     }
   },
-  // Cargamos ambas escenas, empezando por la de título
+  // La escena de la portada (TitleScene) inicia primero
   scene: [TitleScene, GameScene]
 };
 
