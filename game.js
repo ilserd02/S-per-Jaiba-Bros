@@ -46,7 +46,7 @@ function preload () {
   this.load.spritesheet('goomba', 'assets/entities/overworld/goomba.png', { frameWidth: 16, frameHeight: 16 });
 
   // --- EFECTOS DE SONIDO Y MÚSICA ---
-  this.load.audio('theme', 'assets/sound/music/overworld.mp3'); 
+  this.load.audio('theme', 'assets/sound/music/overworld.mp3'); // Música constante de fondo
   this.load.audio('jump', 'assets/sound/effects/jump.mp3');
   this.load.audio('powerup', 'assets/sound/effects/powerup.mp3');
   this.load.audio('kick', 'assets/sound/effects/kick.mp3'); 
@@ -56,7 +56,7 @@ function preload () {
 }
 
 function create () {
-  // --- INICIAR MÚSICA DE FONDO ---
+  // --- INICIAR MÚSICA DE FONDO EN BUCLE ---
   if (this.cache.audio.exists('theme') && !this.sound.get('theme')) {
     this.bgMusic = this.sound.add('theme', { loop: true, volume: 0.5 });
     this.bgMusic.play();
@@ -68,13 +68,13 @@ function create () {
 
   this.floor = this.physics.add.staticGroup();
 
-  // --- GENERACIÓN DEL SUELO (Tamaño normal 16px) ---
+  // --- GENERACIÓN DEL SUELO ---
   for (let x = 0; x < 2000; x += 16) {
     if (x >= 600 && x <= 680) continue;
     this.floor.create(x, config.height - 16, 'floorbricks').setOrigin(0, 0.5).refreshBody();
   }
 
-  // --- TUBERÍAS TAMAÑO NORMAL ---
+  // --- TUBERÍAS ---
   this.floor.create(500, config.height - 32, 'tube-small').setOrigin(0.5, 0.5).refreshBody();
   this.floor.create(580, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).refreshBody();
   this.floor.create(700, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).refreshBody();
@@ -145,17 +145,16 @@ function create () {
     repeat: 0
   });
 
-  // --- CREACIÓN DEL JUGADOR (Escala reducida a 0.06) ---
+  // --- CREACIÓN DEL JUGADOR ---
   this.mario = this.physics.add.sprite(50, 100, 'mario')
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
     .setGravityY(300);
     
-  this.mario.setScale(0.06); 
+  this.mario.setScale(0.14); 
 
-  // Hitbox optimizada para el tamaño 0.06
-  this.mario.body.setSize(160, 220);
-  this.mario.body.setOffset(56, 320);
+  this.mario.body.setSize(160, 240);
+  this.mario.body.setOffset(56, 300);
   
   this.mario.isBig = false; 
   this.mario.isEating = false; 
@@ -207,10 +206,10 @@ function create () {
       }
       
       mario.setTexture('jaiba-eating');
-      mario.setScale(0.06); 
+      mario.setScale(0.14); 
       
-      mario.body.setSize(160, 220);
-      mario.body.setOffset(48, 780);
+      mario.body.setSize(160, 240);
+      mario.body.setOffset(48, 760);
       mario.anims.play('jaiba-eat-mushroom');
 
       mario.once('animationcomplete-jaiba-eat-mushroom', () => {
@@ -223,11 +222,11 @@ function create () {
         }
 
         mario.setTexture('mario-grow');
-        mario.setScale(0.09); // Escala intermedia perfecta al crecer
-        mario.y -= 20; 
+        mario.setScale(0.18); 
+        mario.y -= 45; 
         
-        mario.body.setSize(160, 160);
-        mario.body.setOffset(56, 380);
+        mario.body.setSize(160, 180);
+        mario.body.setOffset(56, 360);
         
         mario.body.reset(mario.x, mario.y);
       });
@@ -259,16 +258,19 @@ function create () {
       if (mario.isBig) {
         mario.isBig = false;
         mario.setTexture('mario'); 
-        mario.setScale(0.06);
+        mario.setScale(0.14);
         
         mario.y -= 5;
-        mario.body.setSize(160, 220);
-        mario.body.setOffset(56, 320);
+        mario.body.setSize(160, 240);
+        mario.body.setOffset(56, 300);
         mario.body.reset(mario.x, mario.y);
         
         goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30;
       } else {
+        // --- PROCESO DE MUERTE DE LA JAIBA ---
         mario.isDead = true;
+        
+        // Pausar música principal
         if (this.bgMusic) this.bgMusic.stop();
 
         mario.body.allowGravity = false;
@@ -280,7 +282,7 @@ function create () {
         }
         
         mario.setTexture('mario-dead');
-        mario.setScale(0.06); 
+        mario.setScale(0.14); 
         mario.anims.play('jaiba-dead');
 
         this.tweens.add({
@@ -290,6 +292,7 @@ function create () {
           duration: 800, 
           ease: 'Linear',
           onComplete: () => {
+            // Llama a la función para mostrar el menú de reintento
             showGameOverMenu(this);
           }
         });
@@ -303,23 +306,27 @@ function create () {
   this.keys = this.input.keyboard.createCursorKeys();
 }
 
+// --- FUNCIÓN PARA MOSTRAR EL BOTÓN INTERACTIVO AL MORIR ---
 function showGameOverMenu (scene) {
+  // Obtenemos el centro de la cámara actual para que el botón aparezca visible en pantalla
   const camX = scene.cameras.main.scrollX + (config.width / 2);
   const camY = config.height / 2;
 
   const retryButton = scene.add.text(camX, camY, '¿Volver a intentar?', {
     fontFamily: 'Arial',
-    fontSize: '14px',
+    fontSize: '16px',
     fill: '#ffffff',
     backgroundColor: '#000000',
-    padding: { x: 8, y: 4 }
+    padding: { x: 10, y: 5 }
   }).setOrigin(0.5);
 
   retryButton.setInteractive({ useHandCursor: true });
 
+  // Efectos visuales al pasar el mouse por encima
   retryButton.on('pointerover', () => retryButton.setStyle({ fill: '#ff0000' }));
   retryButton.on('pointerout', () => retryButton.setStyle({ fill: '#ffffff' }));
 
+  // Acción al hacer clic: reiniciar escena
   retryButton.on('pointerdown', () => {
     scene.scene.restart();
   });
@@ -357,6 +364,7 @@ function update () {
     }
   }
 
+  // Caída al vacío
   if (this.mario.y >= config.height) {
     this.mario.isDead = true;
     if (this.bgMusic) this.bgMusic.stop();
