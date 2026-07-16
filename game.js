@@ -103,7 +103,7 @@ class TitleScene extends Phaser.Scene {
    // 7. LETRERO ALINEADO A LA IZQUIERDA Y ARRIBA (Ajustado)
     // Usamos x: 85 (más a la izquierda que el centro) e y: 40 (más arriba)
     const logo = this.add.image(85, 40, 'letrero').setDepth(10);
-    const targetWidth = 115; // Lo hacemos un poco más pequeño para que quepa bien a la izquierda
+    const targetWidth = 145; // Lo hacemos un poco más pequeño para que quepa bien a la izquierda
     logo.setScale(targetWidth / logo.width);
     // 8. Texto de inicio
     const startText = this.add.text(width / 2, 175, 'PRESIONA ENTER', {
