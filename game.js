@@ -88,7 +88,7 @@ function create () {
     repeat: -1
   })
 
-  // --- CORRECCIÓN GOOMBA: Posición y más alta para que no aparezca bugeado en el suelo ---
+  // --- CREACIÓN DE GOOMBA ---
   const goomba1 = this.goombas.create(350, config.height - 60, 'goomba').setOrigin(0.5, 0.5)
   goomba1.setVelocityX(-40)
   goomba1.setCollideWorldBounds(true)
@@ -130,10 +130,13 @@ function create () {
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
     .setGravityY(300)
-    .setScale(0.04) 
+    
+  // MODIFICADO MANUAL: Jaiba inicial un poco más grande (de 0.04 a 0.06)
+  this.mario.setScale(0.06) 
 
-  this.mario.body.setSize(160, 180)
-  this.mario.body.setOffset(56, 360)
+  // Hitbox calibrada para la nueva escala chica 0.06
+  this.mario.body.setSize(160, 200)
+  this.mario.body.setOffset(56, 340)
   
   this.mario.isBig = false 
   this.mario.isEating = false 
@@ -158,7 +161,7 @@ function create () {
     }
   })
 
-  // Lógica del Hongo
+  // --- LÓGICA DE ALIMENTACIÓN Y TRANSFORMACIÓN ---
   this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
     if (mario.isEating) return 
     
@@ -170,10 +173,12 @@ function create () {
       mario.body.allowGravity = false 
       
       mario.setTexture('jaiba-eating')
-      mario.setScale(0.04) 
       
-      mario.body.setSize(160, 180)
-      mario.body.setOffset(48, 840)
+      // MODIFICADO MANUAL: Escala al comer aumentada proporcionalmente (de 0.04 a 0.06)
+      mario.setScale(0.06) 
+      
+      mario.body.setSize(160, 200)
+      mario.body.setOffset(48, 800)
       mario.anims.play('jaiba-eat-mushroom')
 
       mario.once('animationcomplete-jaiba-eat-mushroom', () => {
@@ -182,6 +187,8 @@ function create () {
         mario.body.allowGravity = true 
         
         mario.setTexture('mario-grow')
+        
+        // Mantiene la jerarquía: La jaiba gigante se queda en 0.12
         mario.setScale(0.12) 
         mario.y -= 35 
         
@@ -193,10 +200,11 @@ function create () {
     }
   })
 
-  // Interacción Goombas
+  // --- LÓGICA DE INTERACCIÓN GOOMBA BLINDADA ---
   this.physics.add.collider(this.mario, this.goombas, (mario, goombaHit) => {
-    if (mario.isEating) return 
+    if (mario.isEating || mario.isDead) return 
     
+    // Si saltas sobre el Goomba, lo aplastas
     if (mario.body.touching.down && goombaHit.body.touching.up) {
       mario.setVelocityY(-180) 
       goombaHit.setVelocityX(0)
@@ -210,15 +218,23 @@ function create () {
         onComplete: () => { goombaHit.destroy() }
       })
     } else {
+      // Si el Goomba te toca de lado o arriba:
       if (mario.isBig) {
+        // FASE 1: Estás grande, te encoge al nuevo tamaño chico (0.06)
         mario.isBig = false
         mario.setTexture('mario') 
-        mario.setScale(0.04)
+        mario.setScale(0.06)
+        
+        // Ajustamos la posición y reseteamos la hitbox al tamaño de la jaiba chica
         mario.y -= 5
-        mario.body.setSize(160, 180)
-        mario.body.setOffset(56, 360)
+        mario.body.setSize(160, 200)
+        mario.body.setOffset(56, 340)
         mario.body.reset(mario.x, mario.y)
+        
+        // Separación física inmediata temporal para evitar colisiones repetidas en el mismo frame
+        goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30;
       } else {
+        // FASE 2: Estás chico y te vuelven a tocar, MUERES
         mario.isDead = true
         mario.setVelocity(0, -300)
         mario.setCollideWorldBounds(false)
@@ -234,7 +250,6 @@ function create () {
 }
 
 function update () {
-  // Asegurar que los Goombas vivos caminen continuamente
   this.goombas.children.iterate(goomba => {
     if (goomba && goomba.body && goomba.body.enable) {
       goomba.anims.play('goomba-walk', true)
