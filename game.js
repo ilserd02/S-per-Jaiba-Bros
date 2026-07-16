@@ -145,15 +145,15 @@ function create () {
     repeat: 0
   });
 
-  // --- CREACIÓN DEL JUGADOR (Escala base incrementada a 0.203) ---
+  // --- CREACIÓN DEL JUGADOR (Nueva escala base ajustada a 0.243) ---
   this.mario = this.physics.add.sprite(50, 100, 'mario')
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
     .setGravityY(300);
     
-  this.mario.setScale(0.203); 
+  this.mario.setScale(0.243); 
 
-  // Ajuste de colisiones para adaptarse al nuevo tamaño aumentado
+  // Caja de colisión adaptada
   this.mario.body.setSize(160, 240);
   this.mario.body.setOffset(56, 300);
   
@@ -207,7 +207,7 @@ function create () {
       }
       
       mario.setTexture('jaiba-eating');
-      mario.setScale(0.203); 
+      mario.setScale(0.243); 
       
       mario.body.setSize(160, 240);
       mario.body.setOffset(48, 760);
@@ -223,8 +223,8 @@ function create () {
         }
 
         mario.setTexture('mario-grow');
-        mario.setScale(0.227); // Escala de la jaiba gigante aumentada
-        mario.y -= 30; 
+        mario.setScale(0.267); // Escala gigante adaptada
+        mario.y -= 35; 
         
         mario.body.setSize(160, 180);
         mario.body.setOffset(56, 360);
@@ -259,7 +259,7 @@ function create () {
       if (mario.isBig) {
         mario.isBig = false;
         mario.setTexture('mario'); 
-        mario.setScale(0.203);
+        mario.setScale(0.243);
         
         mario.y -= 5;
         mario.body.setSize(160, 240);
@@ -280,7 +280,7 @@ function create () {
         }
         
         mario.setTexture('mario-dead');
-        mario.setScale(0.215); // La animación de muerte mantiene su tamaño proporcional superior
+        mario.setScale(0.255); // Escala de muerte para verse claro en el piso
         mario.anims.play('jaiba-dead');
 
         this.tweens.add({
@@ -350,9 +350,8 @@ function update () {
     this.mario.anims.play(idleKey, true); 
   }
 
-  // Ajustado la potencia de salto para el nuevo volumen corporal de la jaiba
   if (this.keys.up.isDown && this.mario.body.touching.down) {
-    this.mario.setVelocityY(-300);
+    this.mario.setVelocityY(-310);
     if (this.cache.audio.exists('jump')) {
       this.sound.play('jump');
     }
