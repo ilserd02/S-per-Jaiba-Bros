@@ -11,7 +11,7 @@ class TitleScene extends Phaser.Scene {
     this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png');
     this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png');
     
-    // RUTA CORREGIDA PARA EL ASSET DEL LETRERO
+    // Ruta oficial del letrero
     this.load.image('letrero', 'assets/scenery/letrero.png');
 
     // Bloques e Items
@@ -41,12 +41,11 @@ class TitleScene extends Phaser.Scene {
 
     // 3. Montañas y Arbustos (Se crean ANTES del suelo para que queden por DETRÁS)
     const mountainGeom = this.add.graphics();
-    mountainGeom.fillStyle(0x00a800, 1); // Verde oscuro retro
+    mountainGeom.fillStyle(0x00a800, 1); // Verde retro
     mountainGeom.beginPath();
-    // La base entra un poco dentro del área del suelo (height - 16 es la superficie del suelo)
-    mountainGeom.moveTo(140, height - 8); 
+    mountainGeom.moveTo(140, height - 16); 
     mountainGeom.lineTo(165, height - 55);
-    mountainGeom.lineTo(190, height - 8);
+    mountainGeom.lineTo(190, height - 16);
     mountainGeom.closePath();
     mountainGeom.fillPath();
 
@@ -62,7 +61,7 @@ class TitleScene extends Phaser.Scene {
     bush1.fillEllipse(130, height - 18, 16, 12);
     bush1.fillEllipse(142, height - 18, 14, 10);
 
-    // 4. Suelo de bloques de ladrillo marrón (Se crean DESPUÉS, cubriendo las bases)
+    // 4. Suelo de bloques de ladrillo marrón (Se crean DESPUÉS, cubriendo la base de la montaña)
     this.floorGroup = this.add.group();
     for (let x = 0; x < width + 16; x += 16) {
       this.floorGroup.create(x, height - 8, 'floorbricks');
@@ -82,13 +81,16 @@ class TitleScene extends Phaser.Scene {
     const centerBox = this.add.sprite(width / 2, 125, 'mysteryBox');
     centerBox.anims.play('box-shine-title', true);
 
-    // Bloque misterioso de la derecha bajado para que no toque el techo
+    // Bloque misterioso de arriba a la derecha (bajado para evitar el cuadro negro)
     const rightBox = this.add.sprite(220, 95, 'mysteryBox');
     rightBox.anims.play('box-shine-title', true);
 
-    // 6. Jaiba posicionada pisando el suelo perfectamente sin enterrarse
-    // Cambiado 'y' a 'height - 52' (192px) para compensar la altura del sprite de 547px escalado a 0.131
-    const titleJaiba = this.add.sprite(45, height - 52, 'mario').setScale(0.131);
+    // 6. Jaiba posicionada pisando el suelo de forma precisa
+    // Al usar setOrigin(0.5, 1), el anclaje de Y queda exactamente en las patas de la jaiba.
+    // El suelo empieza en 'height - 16' (debido a que los bloques miden 16px de alto).
+    const titleJaiba = this.add.sprite(45, height - 16, 'mario')
+      .setOrigin(0.5, 1) 
+      .setScale(0.131);
     titleJaiba.setFrame(0); 
 
     // Goomba posicionado en el suelo caminando
@@ -103,8 +105,8 @@ class TitleScene extends Phaser.Scene {
     const titleGoomba = this.add.sprite(215, height - 24, 'goomba');
     titleGoomba.anims.play('goomba-walk-title', true);
 
-    // 7. COLOCAR EL LOGO OFICIAL (letrero.png)
-    // Desplazado un poco más a la izquierda (width / 2 - 12) y ajustada la escala para óptima visualización
+    // 7. Colocar el logo oficial 'letrero.png'
+    // Desplazado ligeramente a la izquierda y con tamaño correcto
     this.add.image(width / 2 - 12, 45, 'letrero').setScale(0.62);
 
     // 8. Mensaje intermitente "PRESIONA ENTER"
@@ -442,7 +444,7 @@ class GameScene extends Phaser.Scene {
   }
 }
 
-// --- MENÚ DE REINTENTAR ---
+// --- MENÚ DE JUEGO TERMINADO ---
 function showGameOverMenu (scene) {
   const camX = scene.cameras.main.scrollX + (config.width / 2);
   const camY = config.height / 2;
