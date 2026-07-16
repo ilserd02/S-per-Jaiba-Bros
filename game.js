@@ -145,15 +145,14 @@ function create () {
     repeat: 0
   });
 
-  // --- CREACIÓN DEL JUGADOR (Escala base reducida a 0.143) ---
+  // --- CREACIÓN DEL JUGADOR (Escala base reducida a 0.134) ---
   this.mario = this.physics.add.sprite(50, 100, 'mario')
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
     .setGravityY(300);
     
-  this.mario.setScale(0.143); 
+  this.mario.setScale(0.134); 
 
-  // Ajuste de la hitbox para adaptarse a la nueva escala reducida
   this.mario.body.setSize(160, 240);
   this.mario.body.setOffset(56, 300);
   
@@ -207,7 +206,7 @@ function create () {
       }
       
       mario.setTexture('jaiba-eating');
-      mario.setScale(0.143); 
+      mario.setScale(0.134); 
       
       mario.body.setSize(160, 240);
       mario.body.setOffset(48, 760);
@@ -223,7 +222,7 @@ function create () {
         }
 
         mario.setTexture('mario-grow');
-        mario.setScale(0.167); // Escala reducida para la jaiba gigante
+        mario.setScale(0.158); // Jaiba gigante ajustada a 0.158
         mario.y -= 25; 
         
         mario.body.setSize(160, 180);
@@ -259,7 +258,7 @@ function create () {
       if (mario.isBig) {
         mario.isBig = false;
         mario.setTexture('mario'); 
-        mario.setScale(0.143);
+        mario.setScale(0.134);
         
         mario.y -= 5;
         mario.body.setSize(160, 240);
@@ -280,7 +279,7 @@ function create () {
         }
         
         mario.setTexture('mario-dead');
-        mario.setScale(0.155); // Escala balanceada para el sprite de muerte
+        mario.setScale(0.155); // Mantiene escala original para la animación de muerte
         mario.anims.play('jaiba-dead');
 
         this.tweens.add({
