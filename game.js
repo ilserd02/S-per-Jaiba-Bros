@@ -40,6 +40,9 @@ function preload () {
   this.load.spritesheet('mario', 'assets/entities/mario.png', { frameWidth: 273, frameHeight: 547 }) 
   this.load.spritesheet('mario-grow', 'assets/entities/mario-grown.png', { frameWidth: 273, frameHeight: 547 }) 
   this.load.spritesheet('jaiba-eating', 'assets/entities/mario-eat.png', { frameWidth: 256, frameHeight: 1024 })
+  
+  // NUEVO: Carga del spritesheet de muerte basado en tu imagen
+  this.load.spritesheet('mario-dead', 'assets/entities/mario-dead.png', { frameWidth: 273, frameHeight: 547 })
 
   // --- ENEMIGO GOOMBA ---
   this.load.spritesheet('goomba', 'assets/entities/overworld/goomba.png', { frameWidth: 16, frameHeight: 16 })
@@ -67,7 +70,7 @@ function create () {
   this.floor.create(580, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).refreshBody()
   this.floor.create(700, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).refreshBody()
 
-  // --- ANIMACIÓN DE LA CAJA MISTERIOSA ---
+  // --- ANIMACIONES DEL ENTORNO Y ENEMIGOS ---
   this.anims.create({
     key: 'box-shine',
     frames: this.anims.generateFrameNumbers('mysteryBox', { start: 0, end: 2 }),
@@ -75,7 +78,6 @@ function create () {
     repeat: -1
   })
 
-  // --- CREACIÓN DE LA CAJA ---
   this.mysteryBoxes = this.physics.add.staticGroup()
   const box = this.mysteryBoxes.create(80, config.height - 90, 'mysteryBox').setOrigin(0, 0.5).refreshBody()
   box.hasItem = true 
@@ -84,7 +86,6 @@ function create () {
   this.mushrooms = this.physics.add.group()
   this.goombas = this.physics.add.group()
 
-  // --- ANIMACIÓN DEL GOOMBA ---
   this.anims.create({
     key: 'goomba-walk',
     frames: this.anims.generateFrameNumbers('goomba', { start: 0, end: 1 }),
@@ -92,7 +93,6 @@ function create () {
     repeat: -1
   })
 
-  // --- CREACIÓN DE GOOMBA ---
   const goomba1 = this.goombas.create(350, config.height - 60, 'goomba').setOrigin(0.5, 0.5)
   goomba1.setVelocityX(-40)
   goomba1.setCollideWorldBounds(true)
@@ -129,6 +129,14 @@ function create () {
     repeat: 0
   })
 
+  // NUEVO: Animación de la muerte usando los 6 frames de tu imagen
+  this.anims.create({
+    key: 'jaiba-dead',
+    frames: this.anims.generateFrameNumbers('mario-dead', { start: 0, end: 5 }),
+    frameRate: 8,
+    repeat: 0
+  })
+
   // --- CREACIÓN DEL JUGADOR ---
   this.mario = this.physics.add.sprite(50, 100, 'mario')
     .setOrigin(0.5, 0.5)
@@ -142,6 +150,7 @@ function create () {
   
   this.mario.isBig = false 
   this.mario.isEating = false 
+  this.mario.isDead = false
 
   this.physics.world.setBounds(0, 0, 2000, config.height)
   
@@ -165,7 +174,7 @@ function create () {
 
   // --- LÓGICA DE ALIMENTACIÓN ---
   this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
-    if (mario.isEating) return 
+    if (mario.isEating || mario.isDead) return 
     
     mushroomHit.destroy() 
     
@@ -174,7 +183,6 @@ function create () {
       mario.setVelocity(0, 0)
       mario.body.allowGravity = false 
       
-      // Comprobación correcta mediante el caché de audio de Phaser
       if (this.cache.audio.exists('powerup')) {
         this.sound.play('powerup')
       }
@@ -237,15 +245,37 @@ function create () {
         
         goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30
       } else {
+        // --- PROCESO DE MUERTE CON ANIMACIÓN ---
         mario.isDead = true
+        mario.setVelocity(0, 0)
+        mario.body.allowGravity = false
+        mario.body.enable = false // Desactiva colisiones para evitar atascos
         
         if (this.cache.audio.exists('gameover')) {
           this.sound.play('gameover')
         }
         
-        mario.setVelocity(0, -300)
-        mario.setCollideWorldBounds(false)
-        setTimeout(() => this.scene.restart(), 2000)
+        // Cambiamos al nuevo aspecto de derrota
+        mario.setTexture('mario-dead')
+        mario.setScale(0.08)
+        mario.anims.play('jaiba-dead')
+
+        // Pequeño impulso hacia arriba y caída clásica de Mario
+        this.tweens.add({
+          targets: mario,
+          y: mario.y - 40,
+          duration: 400,
+          ease: 'Power1',
+          onComplete: () => {
+            this.tweens.add({
+              targets: mario,
+              y: config.height + 100,
+              duration: 800,
+              ease: 'Power1',
+              onComplete: () => { this.scene.restart() }
+            })
+          }
+        })
       }
     }
   })
@@ -288,12 +318,12 @@ function update () {
     }
   }
 
+  // Si cae al vacío
   if (this.mario.y >= config.height) {
     this.mario.isDead = true
     if (this.cache.audio.exists('gameover')) {
       this.sound.play('gameover')
     }
-    this.mario.setCollideWorldBounds(false)
     setTimeout(() => { this.scene.restart() }, 2000)
   }
 }
