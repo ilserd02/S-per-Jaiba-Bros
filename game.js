@@ -10,10 +10,15 @@ class TitleScene extends Phaser.Scene {
     // Cargamos los elementos para la portada y el fondo del juego
     this.load.image('letrero', 'assets/scenery/letrero.png'); 
     this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png');
-    this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png'); // Cargamos la nube
     
     // Ruta correcta verificada para mario-feli
     this.load.image('mario-feli', 'assets/scenery/mario-feli.png'); 
+
+    // Assets de escenario reales (obtenidos de tu carpeta)
+    this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png');
+    this.load.image('mountain1', 'assets/scenery/overworld/mountain1.png');
+    this.load.image('mountain2', 'assets/scenery/overworld/mountain2.png');
+    this.load.image('bush1', 'assets/scenery/overworld/bush1.png');
 
     // Pre-cargamos los elementos del juego
     this.load.spritesheet('mario', 'assets/entities/mario.png', { frameWidth: 273, frameHeight: 547 });
@@ -42,20 +47,28 @@ class TitleScene extends Phaser.Scene {
     const width = this.scale.width;
     const height = this.scale.height;
 
-    // Fondo azul claro tal como se especificó
+    // Fondo azul claro
     this.cameras.main.setBackgroundColor('#a9d0f5'); 
 
-    // --- NUBES EN EL FONDO DE LA PORTADA ---
+    // --- NUBES EN LA PORTADA ---
     if (this.textures.exists('cloud1')) {
-      // Nube 1 (Izquierda y un poco baja)
-      this.add.image(40, 50, 'cloud1').setScale(0.12).setAlpha(0.85).setDepth(1);
-      // Nube 2 (Centro y más arriba)
-      this.add.image(130, 25, 'cloud1').setScale(0.14).setAlpha(0.85).setDepth(1);
-      // Nube 3 (Derecha y un poco baja)
-      this.add.image(220, 45, 'cloud1').setScale(0.11).setAlpha(0.85).setDepth(1);
+      this.add.image(40, 50, 'cloud1').setOrigin(0.5).setScale(0.12).setAlpha(0.95).setDepth(1);
+      this.add.image(130, 25, 'cloud1').setOrigin(0.5).setScale(0.14).setAlpha(0.95).setDepth(1);
+      this.add.image(220, 45, 'cloud1').setOrigin(0.5).setScale(0.11).setAlpha(0.95).setDepth(1);
     }
 
-    // Suelo inferior
+    // --- MONTAÑAS Y ARBUSTOS EN LA PORTADA (POR DETRÁS DE LOS BLOQUES DE SUELO) ---
+    if (this.textures.exists('mountain1')) {
+      this.add.image(45, height - 16, 'mountain1').setOrigin(0.5, 1).setScale(0.15).setDepth(1);
+    }
+    if (this.textures.exists('mountain2')) {
+      this.add.image(210, height - 16, 'mountain2').setOrigin(0.5, 1).setScale(0.12).setDepth(1);
+    }
+    if (this.textures.exists('bush1')) {
+      this.add.image(110, height - 16, 'bush1').setOrigin(0.5, 1).setScale(0.12).setDepth(1);
+    }
+
+    // Suelo inferior de la portada (Por delante del escenario)
     for (let x = 0; x < width + 16; x += 16) {
       this.add.image(x, height - 8, 'floorbricks').setDepth(2);
     }
@@ -106,7 +119,7 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
-    const height = this.scale.height; // Usaremos esto para colocar los elementos de fondo
+    const height = this.scale.height;
 
     // Música de fondo segura
     if (this.cache.audio.exists('theme') && !this.sound.get('theme')) {
@@ -116,49 +129,40 @@ class GameScene extends Phaser.Scene {
       this.bgMusic.play();
     }
 
-    // Fondo azul claro tal como se especificó
+    // Fondo azul claro del cielo en juego
     this.cameras.main.setBackgroundColor('#a9d0f5'); 
 
-    // --- NUBES EN EL FONDO DEL JUEGO ---
-    if (this.textures.exists('cloud1')) {
-      // Replicamos la nube de la portada
-      this.add.image(130, 25, 'cloud1').setScale(0.14).setAlpha(0.85).setDepth(1);
+    // --- ESCENARIO DE FONDO REPETIDO (POR DETRÁS DE TODO) ---
+    // Colocamos montañas, nubes y arbustos distribuidos a lo largo del nivel (eje X de 0 a 2000 px)
+    for (let x = 80; x < 2000; x += 280) {
+      if (this.textures.exists('mountain1')) {
+        this.add.image(x, height - 16, 'mountain1').setOrigin(0.5, 1).setScale(0.15).setDepth(1);
+      }
+      if (this.textures.exists('mountain2')) {
+        this.add.image(x + 120, height - 16, 'mountain2').setOrigin(0.5, 1).setScale(0.12).setDepth(1);
+      }
+      if (this.textures.exists('bush1')) {
+        this.add.image(x + 50, height - 16, 'bush1').setOrigin(0.5, 1).setScale(0.12).setDepth(1);
+        this.add.image(x + 180, height - 16, 'bush1').setOrigin(0.5, 1).setScale(0.12).setDepth(1);
+      }
+      if (this.textures.exists('cloud1')) {
+        this.add.image(x, 40, 'cloud1').setOrigin(0.5).setScale(0.12).setAlpha(0.95).setDepth(1);
+        this.add.image(x + 140, 20, 'cloud1').setOrigin(0.5).setScale(0.14).setAlpha(0.95).setDepth(1);
+      }
     }
-
-    // --- MONTAÑAS EN EL FONDO DEL JUEGO ---
-    // Agregamos montañas replicadas de la portada
-    const mountainGraphics = this.add.graphics({ fillStyle: { color: 0x009a00 } }); // Verde para la montaña
-    
-    // Función helper para dibujar una montaña (Triángulo)
-    function drawMountain(graphics, x, y, baseWidth, mountainHeight) {
-      const triangle = new Phaser.Geom.Triangle(
-        x, y, // Vértice inferior izquierdo
-        x + baseWidth / 2, y - mountainHeight, // Vértice superior
-        x + baseWidth, y // Vértice inferior derecho
-      );
-      graphics.fillTriangleShape(triangle);
-    }
-    
-    // Montaña grande izquierda
-    drawMountain(mountainGraphics, 30, height - 16, 60, 40); 
-    // Montaña pequeña derecha
-    drawMountain(mountainGraphics, 200, height - 16, 40, 25);
-    
-    // Le damos profundidad a las montañas para que estén detrás de todo
-    mountainGraphics.setDepth(1);
 
     this.floor = this.physics.add.staticGroup();
 
-    // Generación del suelo
+    // Generación del suelo (Por encima de las montañas por su setDepth(2))
     for (let x = 0; x < 2000; x += 16) {
       if (x >= 600 && x <= 680) continue;
-      this.floor.create(x, config.height - 16, 'floorbricks').setOrigin(0, 0.5).refreshBody();
+      this.floor.create(x, config.height - 16, 'floorbricks').setOrigin(0, 0.5).setDepth(2).refreshBody();
     }
 
     // Tuberías
-    this.floor.create(500, config.height - 32, 'tube-small').setOrigin(0.5, 0.5).refreshBody();
-    this.floor.create(580, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).refreshBody();
-    this.floor.create(700, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).refreshBody();
+    this.floor.create(500, config.height - 32, 'tube-small').setOrigin(0.5, 0.5).setDepth(2).refreshBody();
+    this.floor.create(580, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).setDepth(2).refreshBody();
+    this.floor.create(700, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).setDepth(2).refreshBody();
 
     // Creación segura de animaciones
     if (!this.anims.exists('box-shine') && this.textures.exists('mysteryBox')) {
@@ -171,7 +175,7 @@ class GameScene extends Phaser.Scene {
     }
 
     this.mysteryBoxes = this.physics.add.staticGroup();
-    const box = this.mysteryBoxes.create(80, config.height - 90, 'mysteryBox').setOrigin(0, 0.5).refreshBody();
+    const box = this.mysteryBoxes.create(80, config.height - 90, 'mysteryBox').setOrigin(0, 0.5).setDepth(2).refreshBody();
     box.hasItem = true;
     
     if (this.anims.exists('box-shine')) {
@@ -190,7 +194,7 @@ class GameScene extends Phaser.Scene {
       });
     }
 
-    const goomba1 = this.goombas.create(350, config.height - 60, 'goomba').setOrigin(0.5, 0.5);
+    const goomba1 = this.goombas.create(350, config.height - 60, 'goomba').setOrigin(0.5, 0.5).setDepth(3);
     goomba1.setVelocityX(-40);
     goomba1.setCollideWorldBounds(true);
 
@@ -245,11 +249,12 @@ class GameScene extends Phaser.Scene {
       });
     }
 
-    // Creación del jugador
+    // Creación del jugador (Por encima de todo)
     this.mario = this.physics.add.sprite(50, 100, 'mario')
       .setOrigin(0.5, 0.5)
       .setCollideWorldBounds(true)
-      .setGravityY(300);
+      .setGravityY(300)
+      .setDepth(4);
       
     this.mario.setScale(0.163); 
     this.mario.body.setSize(160, 240);
@@ -282,7 +287,7 @@ class GameScene extends Phaser.Scene {
             this.sound.play('sprout');
           }
 
-          const mushroom = this.mushrooms.create(boxHit.x + 8, boxHit.y - 18, 'mushroom');
+          const mushroom = this.mushrooms.create(boxHit.x + 8, boxHit.y - 18, 'mushroom').setDepth(3);
           mushroom.setOrigin(0.5, 0.5);
           mushroom.setVelocityX(50); 
         } else {
@@ -360,142 +365,3 @@ class GameScene extends Phaser.Scene {
         } else {
           mario.isDead = true;
           if (this.bgMusic) this.bgMusic.stop();
-
-          mario.body.allowGravity = false;
-          mario.body.setVelocity(0, 0);
-          mario.body.enable = false; 
-          
-          if (this.cache.audio.exists('gameover')) {
-            this.sound.play('gameover');
-          }
-          
-          if (this.textures.exists('mario-dead') && this.anims.exists('jaiba-dead')) {
-            mario.setTexture('mario-dead');
-            mario.setScale(0.175); 
-            mario.anims.play('jaiba-dead');
-          }
-
-          this.tweens.add({
-            targets: mario,
-            alpha: 0,
-            delay: 1000, 
-            duration: 800, 
-            ease: 'Linear',
-            onComplete: () => {
-              showGameOverMenu(this);
-            }
-          });
-        }
-      }
-    });
-
-    this.cameras.main.setBounds(0, 0, 2000, config.height);
-    this.cameras.main.startFollow(this.mario);
-
-    this.keys = this.input.keyboard.createCursorKeys();
-  }
-
-  convertirEnGrande(mario) {
-    mario.isBig = true;
-    mario.isEating = false;
-    mario.body.allowGravity = true; 
-    
-    if (this.cache.audio.exists('powerup')) {
-      this.sound.play('powerup');
-    }
-
-    if (this.textures.exists('mario-grow')) {
-      mario.setTexture('mario-grow');
-      mario.setScale(0.187); 
-    }
-    mario.y -= 30; 
-    
-    mario.body.setSize(160, 180);
-    mario.body.setOffset(56, 360);
-    mario.body.reset(mario.x, mario.y);
-  }
-
-  update() {
-    this.goombas.children.iterate(goomba => {
-      if (goomba && goomba.body && goomba.body.enable && this.anims.exists('goomba-walk')) {
-        goomba.anims.play('goomba-walk', true);
-      }
-    });
-
-    if (this.mario.isDead || this.mario.isEating) return;
-
-    const walkKey = (this.mario.isBig && this.anims.exists('jaiba-big-walk')) ? 'jaiba-big-walk' : 'jaiba-walk';
-    const idleKey = (this.mario.isBig && this.anims.exists('jaiba-big-idle')) ? 'jaiba-big-idle' : 'jaiba-idle';
-
-    if (this.keys.left.isDown) {
-      this.mario.setVelocityX(-120); 
-      if (this.anims.exists(walkKey)) this.mario.anims.play(walkKey, true); 
-      this.mario.flipX = true;
-    } else if (this.keys.right.isDown) {
-      this.mario.setVelocityX(120);  
-      if (this.anims.exists(walkKey)) this.mario.anims.play(walkKey, true); 
-      this.mario.flipX = false;
-    } else {
-      this.mario.setVelocityX(0);     
-      if (this.anims.exists(idleKey)) this.mario.anims.play(idleKey, true); 
-    }
-
-    if (this.keys.up.isDown && this.mario.body.touching.down) {
-      this.mario.setVelocityY(-300);
-      if (this.cache.audio.exists('jump')) {
-        this.sound.play('jump');
-      }
-    }
-
-    if (this.mario.y >= config.height) {
-      this.mario.isDead = true;
-      if (this.bgMusic) this.bgMusic.stop();
-      if (this.cache.audio.exists('gameover')) {
-        this.sound.play('gameover');
-      }
-      setTimeout(() => { showGameOverMenu(this); }, 1000);
-    }
-  }
-}
-
-// --- MENÚ GAME OVER ---
-function showGameOverMenu(scene) {
-  const camX = scene.cameras.main.scrollX + (config.width / 2);
-  const camY = config.height / 2;
-
-  const retryButton = scene.add.text(camX, camY, '¿Volver a intentar?', {
-    fontFamily: 'Arial',
-    fontSize: '14px',
-    fill: '#ffffff',
-    backgroundColor: '#000000',
-    padding: { x: 8, y: 4 }
-  }).setOrigin(0.5);
-
-  retryButton.setInteractive({ useHandCursor: true });
-
-  retryButton.on('pointerover', () => retryButton.setStyle({ fill: '#ff0000' }));
-  retryButton.on('pointerout', () => retryButton.setStyle({ fill: '#ffffff' }));
-
-  retryButton.on('pointerdown', () => {
-    scene.scene.restart();
-  });
-}
-
-// --- CONFIGURACIÓN GLOBAL ---
-const config = {
-  type: Phaser.AUTO,
-  width: 256,
-  height: 244,
-  backgroundColor: '#049cd8', // Color celeste claro modificado
-  parent: 'game',
-  physics: {
-    default: 'arcade',
-    arcade: {
-      gravity: { y: 300 },
-      debug: false 
-    }
-  },
-  scene: [TitleScene, GameScene]
-};
-
-new Phaser.Game(config);
