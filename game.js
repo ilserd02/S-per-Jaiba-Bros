@@ -11,8 +11,8 @@ class TitleScene extends Phaser.Scene {
     this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png');
     this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png');
     
-    // Ruta oficial del letrero
-    this.load.image('letrero', 'assets/scenery/letrero.png');
+    // Corregimos la ruta al letrero oficial y le agregamos "?v=2" para romper la caché
+    this.load.image('letrero', 'assets/scenery/letrero.png?v=2');
 
     // Bloques e Items
     this.load.spritesheet('mysteryBox', 'assets/blocks/overworld/misteryBlock.png', { frameWidth: 16, frameHeight: 16 });
@@ -21,7 +21,7 @@ class TitleScene extends Phaser.Scene {
     this.load.spritesheet('mario', 'assets/entities/mario.png', { frameWidth: 273, frameHeight: 547 });
     this.load.spritesheet('goomba', 'assets/entities/overworld/goomba.png', { frameWidth: 16, frameHeight: 16 });
 
-    // Música de fondo
+    // Música de fondo (Revisa si la ruta es correcta, si no, puedes comentarla temporalmente)
     this.load.audio('theme', 'assets/sound/music/overworld.mp3');
   }
 
@@ -29,19 +29,19 @@ class TitleScene extends Phaser.Scene {
     const width = this.scale.width;
     const height = this.scale.height;
 
-    // 1. Fondo azul cielo pálido
+    // 1. Fondo azul cielo
     this.cameras.main.setBackgroundColor('#92a1fc'); 
 
-    // 2. Nubes en el fondo
-    this.add.image(20, 30, 'cloud1').setScale(0.08).setAlpha(0.9);
-    this.add.image(55, 25, 'cloud1').setScale(0.08).setAlpha(0.9);
-    this.add.image(90, 35, 'cloud1').setScale(0.08).setAlpha(0.9);
-    this.add.image(210, 40, 'cloud1').setScale(0.08).setAlpha(0.9);
-    this.add.image(35, 120, 'cloud1').setScale(0.08).setAlpha(0.9);
+    // 2. Nubes (Profundidad 1)
+    this.add.image(20, 30, 'cloud1').setScale(0.08).setAlpha(0.9).setDepth(1);
+    this.add.image(55, 25, 'cloud1').setScale(0.08).setAlpha(0.9).setDepth(1);
+    this.add.image(90, 35, 'cloud1').setScale(0.08).setAlpha(0.9).setDepth(1);
+    this.add.image(210, 40, 'cloud1').setScale(0.08).setAlpha(0.9).setDepth(1);
+    this.add.image(35, 120, 'cloud1').setScale(0.08).setAlpha(0.9).setDepth(1);
 
-    // 3. Montañas y Arbustos (Se crean ANTES del suelo para que queden por DETRÁS)
+    // 3. Montañas y Arbustos (Detrás del piso)
     const mountainGeom = this.add.graphics();
-    mountainGeom.fillStyle(0x00a800, 1); // Verde retro
+    mountainGeom.fillStyle(0x00a800, 1);
     mountainGeom.beginPath();
     mountainGeom.moveTo(140, height - 16); 
     mountainGeom.lineTo(165, height - 55);
@@ -49,25 +49,23 @@ class TitleScene extends Phaser.Scene {
     mountainGeom.closePath();
     mountainGeom.fillPath();
 
-    // Detalles decorativos de la montaña verde
     mountainGeom.fillStyle(0x000000, 1);
     mountainGeom.fillRect(160, height - 30, 2, 2);
     mountainGeom.fillRect(170, height - 40, 2, 2);
     mountainGeom.fillRect(152, height - 24, 2, 2);
 
-    // Arbusto delante de la montaña pero detrás del piso
     const bush1 = this.add.graphics();
-    bush1.fillStyle(0x00fc00, 1); // Verde brillante
+    bush1.fillStyle(0x00fc00, 1);
     bush1.fillEllipse(130, height - 18, 16, 12);
     bush1.fillEllipse(142, height - 18, 14, 10);
 
-    // 4. Suelo de bloques de ladrillo marrón (Se crean DESPUÉS, cubriendo la base de la montaña)
+    // 4. Suelo (Profundidad 2)
     this.floorGroup = this.add.group();
     for (let x = 0; x < width + 16; x += 16) {
-      this.floorGroup.create(x, height - 8, 'floorbricks');
+      this.floorGroup.create(x, height - 8, 'floorbricks').setDepth(2);
     }
 
-    // 5. Bloques de preguntas "?" animados
+    // 5. Bloques de preguntas "?"
     if (!this.anims.exists('box-shine-title')) {
       this.anims.create({
         key: 'box-shine-title',
@@ -77,23 +75,20 @@ class TitleScene extends Phaser.Scene {
       });
     }
 
-    // Bloque misterioso del centro bajado ligeramente
-    const centerBox = this.add.sprite(width / 2, 125, 'mysteryBox');
+    const centerBox = this.add.sprite(width / 2, 125, 'mysteryBox').setDepth(3);
     centerBox.anims.play('box-shine-title', true);
 
-    // Bloque misterioso de arriba a la derecha (bajado para evitar el cuadro negro)
-    const rightBox = this.add.sprite(220, 95, 'mysteryBox');
+    const rightBox = this.add.sprite(220, 95, 'mysteryBox').setDepth(3);
     rightBox.anims.play('box-shine-title', true);
 
-    // 6. Jaiba posicionada pisando el suelo de forma precisa
-    // Al usar setOrigin(0.5, 1), el anclaje de Y queda exactamente en las patas de la jaiba.
-    // El suelo empieza en 'height - 16' (debido a que los bloques miden 16px de alto).
+    // 6. Jaiba con origen en la base de sus patas (setOrigin 0.5, 1) y en capa superior
     const titleJaiba = this.add.sprite(45, height - 16, 'mario')
       .setOrigin(0.5, 1) 
-      .setScale(0.131);
+      .setScale(0.131)
+      .setDepth(10); 
     titleJaiba.setFrame(0); 
 
-    // Goomba posicionado en el suelo caminando
+    // Goomba en el suelo
     if (!this.anims.exists('goomba-walk-title')) {
       this.anims.create({
         key: 'goomba-walk-title',
@@ -102,20 +97,19 @@ class TitleScene extends Phaser.Scene {
         repeat: -1
       });
     }
-    const titleGoomba = this.add.sprite(215, height - 24, 'goomba');
+    const titleGoomba = this.add.sprite(215, height - 24, 'goomba').setDepth(10);
     titleGoomba.anims.play('goomba-walk-title', true);
 
-    // 7. Colocar el logo oficial 'letrero.png'
-    // Desplazado ligeramente a la izquierda y con tamaño correcto
-    this.add.image(width / 2 - 12, 45, 'letrero').setScale(0.62);
+    // 7. Letrero oficial (ahora cargará correctamente desde scenery)
+    this.add.image(width / 2, 50, 'letrero').setScale(0.62).setDepth(10);
 
-    // 8. Mensaje intermitente "PRESIONA ENTER"
+    // 8. Texto de inicio
     const startText = this.add.text(width / 2, 175, 'PRESIONA ENTER', {
       fontFamily: '"Courier New", Courier, monospace',
       fontSize: '10px',
       fill: '#ffffff',
       fontStyle: 'bold'
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setDepth(10);
 
     this.tweens.add({
       targets: startText,
@@ -125,7 +119,7 @@ class TitleScene extends Phaser.Scene {
       repeat: -1
     });
 
-    // 9. Tecla Enter para iniciar el juego
+    // 9. Tecla Enter para iniciar
     this.input.keyboard.once('keydown-ENTER', () => {
       this.scene.start('GameScene');
     });
@@ -139,7 +133,6 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
-    // Activar música del Overworld si no está sonando
     if (this.cache.audio.exists('theme') && !this.sound.get('theme')) {
       this.bgMusic = this.sound.add('theme', { loop: true, volume: 0.5 });
       this.bgMusic.play();
@@ -151,18 +144,15 @@ class GameScene extends Phaser.Scene {
 
     this.floor = this.physics.add.staticGroup();
 
-    // Generar suelo del juego
     for (let x = 0; x < 2000; x += 16) {
       if (x >= 600 && x <= 680) continue;
       this.floor.create(x, config.height - 16, 'floorbricks').setOrigin(0, 0.5).refreshBody();
     }
 
-    // Tuberías
     this.floor.create(500, config.height - 32, 'tube-small').setOrigin(0.5, 0.5).refreshBody();
     this.floor.create(580, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).refreshBody();
     this.floor.create(700, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).refreshBody();
 
-    // Bloques misteriosos animados
     if (!this.anims.exists('box-shine')) {
       this.anims.create({
         key: 'box-shine',
@@ -193,7 +183,6 @@ class GameScene extends Phaser.Scene {
     goomba1.setVelocityX(-40);
     goomba1.setCollideWorldBounds(true);
 
-    // Animaciones de la Jaiba
     if (!this.anims.exists('jaiba-walk')) {
       this.anims.create({
         key: 'jaiba-walk',
@@ -244,14 +233,12 @@ class GameScene extends Phaser.Scene {
       });
     }
 
-    // Crear al jugador
     this.mario = this.physics.add.sprite(50, 100, 'mario')
       .setOrigin(0.5, 0.5)
       .setCollideWorldBounds(true)
       .setGravityY(300);
       
     this.mario.setScale(0.131); 
-
     this.mario.body.setSize(160, 240);
     this.mario.body.setOffset(56, 300);
     
@@ -265,7 +252,6 @@ class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.mushrooms, this.floor);
     this.physics.add.collider(this.goombas, this.floor);
 
-    // Colisión con los bloques sorpresa
     this.physics.add.collider(this.mario, this.mysteryBoxes, (mario, boxHit) => {
       if (mario.body.touching.up) {
         if (boxHit.hasItem) {
@@ -289,7 +275,6 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    // Evento de comer hongo
     this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
       if (mario.isEating || mario.isDead) return;
       
@@ -306,7 +291,6 @@ class GameScene extends Phaser.Scene {
         
         mario.setTexture('jaiba-eating');
         mario.setScale(0.131); 
-        
         mario.body.setSize(160, 240);
         mario.body.setOffset(48, 760);
         mario.anims.play('jaiba-eat-mushroom');
@@ -326,13 +310,11 @@ class GameScene extends Phaser.Scene {
           
           mario.body.setSize(160, 180);
           mario.body.setOffset(56, 360);
-          
           mario.body.reset(mario.x, mario.y);
         });
       }
     });
 
-    // Colisión con enemigos
     this.physics.add.collider(this.mario, this.goombas, (mario, goombaHit) => {
       if (mario.isEating || mario.isDead) return;
       
@@ -481,7 +463,6 @@ const config = {
       debug: false 
     }
   },
-  // La escena de la portada (TitleScene) inicia primero
   scene: [TitleScene, GameScene]
 };
 
