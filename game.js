@@ -7,13 +7,14 @@ class TitleScene extends Phaser.Scene {
   }
 
   preload() {
-    // Solo cargamos lo necesario para la portada original
+    // Cargamos lo necesario para la portada original
     this.load.image('letrero', 'assets/scenery/letrero.png'); 
     this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png');
-    this.load.spritesheet('mario', 'assets/entities/mario.png', { frameWidth: 273, frameHeight: 547 });
+    this.load.image('mario-feli', 'assets/entities/mario-feli.png'); // Cargamos mario-feli para la portada
 
     // Pre-cargamos el resto de elementos para el nivel de juego
     this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png');
+    this.load.spritesheet('mario', 'assets/entities/mario.png', { frameWidth: 273, frameHeight: 547 });
     this.load.spritesheet('mysteryBox', 'assets/blocks/overworld/misteryBlock.png', { frameWidth: 16, frameHeight: 16 });
     this.load.image('emptyBox', 'assets/blocks/overworld/emptyBlock.png');
     this.load.image('mushroom', 'assets/collectibles/super-mushroom.png');
@@ -47,12 +48,14 @@ class TitleScene extends Phaser.Scene {
       this.add.image(x, height - 8, 'floorbricks').setDepth(2);
     }
 
-    // Jaiba estática de muestra en el suelo con tu nueva escala reducida (0.163)
-    const titleJaiba = this.add.sprite(45, height - 16, 'mario')
-      .setOrigin(0.5, 1) 
-      .setScale(0.163)
-      .setDepth(10); 
-    titleJaiba.setFrame(0); 
+    // Mario-feli saltando: elevado del suelo, mirando a la derecha y con escala de 0.163
+    if (this.textures.exists('mario-feli')) {
+      const jumpingMario = this.add.image(45, height - 55, 'mario-feli')
+        .setOrigin(0.5, 0.5) 
+        .setScale(0.163)
+        .setDepth(10);
+      jumpingMario.flipX = false; // Mirando hacia la derecha
+    }
 
     // Letrero original centrado
     if (this.textures.exists('letrero')) {
@@ -198,7 +201,7 @@ class GameScene extends Phaser.Scene {
       });
     }
 
-    // Creación del jugador (Nueva escala reducida a 0.163)
+    // Creación del jugador (Escala reducida a 0.163)
     this.mario = this.physics.add.sprite(50, 100, 'mario')
       .setOrigin(0.5, 0.5)
       .setCollideWorldBounds(true)
@@ -246,7 +249,7 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    // Colisión con el Hongo (Segura contra crashes)
+    // Colisión con el Hongo
     this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
       if (mario.isEating || mario.isDead) return;
       
@@ -261,7 +264,6 @@ class GameScene extends Phaser.Scene {
           this.sound.play('bump');
         }
         
-        // Animación de comer con escala ajustada a 0.163
         if (this.textures.exists('jaiba-eating') && this.anims.exists('jaiba-eat-mushroom')) {
           mario.setTexture('jaiba-eating');
           mario.setScale(0.163); 
@@ -303,7 +305,7 @@ class GameScene extends Phaser.Scene {
         if (mario.isBig) {
           mario.isBig = false;
           mario.setTexture('mario'); 
-          mario.setScale(0.163); // Retorno a escala original pequeña
+          mario.setScale(0.163); 
           
           mario.y -= 5;
           mario.body.setSize(160, 240);
@@ -325,7 +327,7 @@ class GameScene extends Phaser.Scene {
           
           if (this.textures.exists('mario-dead') && this.anims.exists('jaiba-dead')) {
             mario.setTexture('mario-dead');
-            mario.setScale(0.175); // Escala muerta ajustada a 0.175
+            mario.setScale(0.175); 
             mario.anims.play('jaiba-dead');
           }
 
@@ -349,7 +351,6 @@ class GameScene extends Phaser.Scene {
     this.keys = this.input.keyboard.createCursorKeys();
   }
 
-  // Crecer de forma limpia (Escala reducida a 0.187)
   convertirEnGrande(mario) {
     mario.isBig = true;
     mario.isEating = false;
