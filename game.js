@@ -103,7 +103,7 @@ class TitleScene extends Phaser.Scene {
     // 7. LETRERO CON ESCALA AUTOMÁTICA
     // Creamos el letrero y calculamos la escala exacta para que mida 145 píxeles de ancho
     const logo = this.add.image(width / 2, 55, 'letrero').setDepth(10);
-    const targetWidth = 145; 
+    const targetWidth = 65; 
     logo.setScale(targetWidth / logo.width);
 
     // 8. Texto de inicio
