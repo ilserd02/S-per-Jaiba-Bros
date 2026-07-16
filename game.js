@@ -10,12 +10,12 @@ class TitleScene extends Phaser.Scene {
     // Cargamos los elementos para la portada
     this.load.image('letrero', 'assets/scenery/letrero.png'); 
     this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png');
+    this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png'); // Cargamos la nube
     
     // Ruta correcta verificada para mario-feli
     this.load.image('mario-feli', 'assets/scenery/mario-feli.png'); 
 
     // Pre-cargamos los elementos del juego
-    this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png');
     this.load.spritesheet('mario', 'assets/entities/mario.png', { frameWidth: 273, frameHeight: 547 });
     this.load.spritesheet('mysteryBox', 'assets/blocks/overworld/misteryBlock.png', { frameWidth: 16, frameHeight: 16 });
     this.load.image('emptyBox', 'assets/blocks/overworld/emptyBlock.png');
@@ -44,6 +44,16 @@ class TitleScene extends Phaser.Scene {
 
     // Fondo celeste plano
     this.cameras.main.setBackgroundColor('#049cd8'); 
+
+    // --- NUBES EN EL FONDO DE LA PORTADA ---
+    if (this.textures.exists('cloud1')) {
+      // Nube 1 (Izquierda y un poco baja)
+      this.add.image(40, 50, 'cloud1').setScale(0.12).setAlpha(0.85).setDepth(1);
+      // Nube 2 (Centro y más arriba)
+      this.add.image(130, 25, 'cloud1').setScale(0.14).setAlpha(0.85).setDepth(1);
+      // Nube 3 (Derecha y un poco baja)
+      this.add.image(220, 45, 'cloud1').setScale(0.11).setAlpha(0.85).setDepth(1);
+    }
 
     // Suelo inferior
     for (let x = 0; x < width + 16; x += 16) {
