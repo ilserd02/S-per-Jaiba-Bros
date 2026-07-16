@@ -9,7 +9,7 @@ const config = {
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: { y: 350 }, // Aumentada ligeramente por el peso del nuevo tamaño
+      gravity: { y: 300 },
       debug: false 
     }
   },
@@ -64,23 +64,20 @@ function create () {
     this.bgMusic.play();
   }
 
-  // Nube más grande para hacer juego
-  this.add.image(100, 30, 'cloud1').setOrigin(0, 0).setScale(0.25);
+  this.add.image(100, 50, 'cloud1').setOrigin(0, 0).setScale(0.15);
 
   this.floor = this.physics.add.staticGroup();
 
-  // --- GENERACIÓN DEL SUELO (Escalado al doble: de 16px a 32px de ancho) ---
-  for (let x = 0; x < 3000; x += 32) {
-    if (x >= 700 && x <= 820) continue; // Hueco adaptado
-    const block = this.floor.create(x, config.height - 32, 'floorbricks').setOrigin(0, 0);
-    block.setScale(2); // Suelo el doble de grande
-    block.refreshBody();
+  // --- GENERACIÓN DEL SUELO (Tamaño normal 16px) ---
+  for (let x = 0; x < 2000; x += 16) {
+    if (x >= 600 && x <= 680) continue;
+    this.floor.create(x, config.height - 16, 'floorbricks').setOrigin(0, 0.5).refreshBody();
   }
 
-  // --- TUBERÍAS ESCALADAS (Crecidas proporcionalmente) ---
-  this.floor.create(500, config.height - 64, 'tube-small').setOrigin(0.5, 0).setScale(1.8).refreshBody();
-  this.floor.create(620, config.height - 80, 'tube-medium').setOrigin(0.5, 0).setScale(1.8).refreshBody();
-  this.floor.create(860, config.height - 96, 'tube-large').setOrigin(0.5, 0).setScale(1.8).refreshBody();
+  // --- TUBERÍAS TAMAÑO NORMAL ---
+  this.floor.create(500, config.height - 32, 'tube-small').setOrigin(0.5, 0.5).refreshBody();
+  this.floor.create(580, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).refreshBody();
+  this.floor.create(700, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).refreshBody();
 
   // --- ANIMACIONES DEL ENTORNO Y ENEMIGOS ---
   this.anims.create({
@@ -91,12 +88,9 @@ function create () {
   });
 
   this.mysteryBoxes = this.physics.add.staticGroup();
-  // Caja misteriosa duplicada en tamaño
-  const box = this.mysteryBoxes.create(120, config.height - 140, 'mysteryBox').setOrigin(0, 0);
-  box.setScale(2); 
+  const box = this.mysteryBoxes.create(80, config.height - 90, 'mysteryBox').setOrigin(0, 0.5).refreshBody();
   box.hasItem = true;
   box.anims.play('box-shine', true);
-  box.refreshBody();
 
   this.mushrooms = this.physics.add.group();
   this.goombas = this.physics.add.group();
@@ -108,9 +102,7 @@ function create () {
     repeat: -1
   });
 
-  // --- GOOMBA MÁS GRANDE ---
-  const goomba1 = this.goombas.create(400, config.height - 64, 'goomba').setOrigin(0.5, 0.5);
-  goomba1.setScale(1.8); // Ajustado al tamaño de la nueva jaiba
+  const goomba1 = this.goombas.create(350, config.height - 60, 'goomba').setOrigin(0.5, 0.5);
   goomba1.setVelocityX(-40);
   goomba1.setCollideWorldBounds(true);
 
@@ -153,16 +145,17 @@ function create () {
     repeat: 0
   });
 
-  // --- CREACIÓN DEL JUGADOR ---
+  // --- CREACIÓN DEL JUGADOR (Escala reducida a 0.06) ---
   this.mario = this.physics.add.sprite(50, 100, 'mario')
     .setOrigin(0.5, 0.5)
     .setCollideWorldBounds(true)
-    .setGravityY(350);
+    .setGravityY(300);
     
-  this.mario.setScale(0.14); 
+  this.mario.setScale(0.06); 
 
-  this.mario.body.setSize(160, 240);
-  this.mario.body.setOffset(56, 300);
+  // Hitbox optimizada para el tamaño 0.06
+  this.mario.body.setSize(160, 220);
+  this.mario.body.setOffset(56, 320);
   
   this.mario.isBig = false; 
   this.mario.isEating = false; 
@@ -187,10 +180,8 @@ function create () {
           this.sound.play('sprout');
         }
 
-        // Hongo escalado a 1.8 para no verse pequeño
-        const mushroom = this.mushrooms.create(boxHit.x + 16, boxHit.y - 24, 'mushroom');
+        const mushroom = this.mushrooms.create(boxHit.x + 8, boxHit.y - 18, 'mushroom');
         mushroom.setOrigin(0.5, 0.5);
-        mushroom.setScale(1.8);
         mushroom.setVelocityX(50); 
       } else {
         if (this.cache.audio.exists('bump')) {
@@ -216,10 +207,10 @@ function create () {
       }
       
       mario.setTexture('jaiba-eating');
-      mario.setScale(0.14); 
+      mario.setScale(0.06); 
       
-      mario.body.setSize(160, 240);
-      mario.body.setOffset(48, 760);
+      mario.body.setSize(160, 220);
+      mario.body.setOffset(48, 780);
       mario.anims.play('jaiba-eat-mushroom');
 
       mario.once('animationcomplete-jaiba-eat-mushroom', () => {
@@ -232,11 +223,11 @@ function create () {
         }
 
         mario.setTexture('mario-grow');
-        mario.setScale(0.18); 
-        mario.y -= 45; 
+        mario.setScale(0.09); // Escala intermedia perfecta al crecer
+        mario.y -= 20; 
         
-        mario.body.setSize(160, 180);
-        mario.body.setOffset(56, 360);
+        mario.body.setSize(160, 160);
+        mario.body.setOffset(56, 380);
         
         mario.body.reset(mario.x, mario.y);
       });
@@ -248,7 +239,7 @@ function create () {
     if (mario.isEating || mario.isDead) return;
     
     if (mario.body.touching.down && goombaHit.body.touching.up) {
-      mario.setVelocityY(-200); 
+      mario.setVelocityY(-180); 
       
       if (this.cache.audio.exists('kick')) {
         this.sound.play('kick');
@@ -268,14 +259,14 @@ function create () {
       if (mario.isBig) {
         mario.isBig = false;
         mario.setTexture('mario'); 
-        mario.setScale(0.14);
+        mario.setScale(0.06);
         
         mario.y -= 5;
-        mario.body.setSize(160, 240);
-        mario.body.setOffset(56, 300);
+        mario.body.setSize(160, 220);
+        mario.body.setOffset(56, 320);
         mario.body.reset(mario.x, mario.y);
         
-        goombaHit.x += (goombaHit.x > mario.x) ? 40 : -40;
+        goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30;
       } else {
         mario.isDead = true;
         if (this.bgMusic) this.bgMusic.stop();
@@ -289,7 +280,7 @@ function create () {
         }
         
         mario.setTexture('mario-dead');
-        mario.setScale(0.14); 
+        mario.setScale(0.06); 
         mario.anims.play('jaiba-dead');
 
         this.tweens.add({
@@ -318,10 +309,10 @@ function showGameOverMenu (scene) {
 
   const retryButton = scene.add.text(camX, camY, '¿Volver a intentar?', {
     fontFamily: 'Arial',
-    fontSize: '16px',
+    fontSize: '14px',
     fill: '#ffffff',
     backgroundColor: '#000000',
-    padding: { x: 10, y: 5 }
+    padding: { x: 8, y: 4 }
   }).setOrigin(0.5);
 
   retryButton.setInteractive({ useHandCursor: true });
@@ -359,9 +350,8 @@ function update () {
     this.mario.anims.play(idleKey, true); 
   }
 
-  // Fuerza de salto ligeramente superior debido al tamaño de los elementos del mapa
   if (this.keys.up.isDown && this.mario.body.touching.down) {
-    this.mario.setVelocityY(-310);
+    this.mario.setVelocityY(-285);
     if (this.cache.audio.exists('jump')) {
       this.sound.play('jump');
     }
