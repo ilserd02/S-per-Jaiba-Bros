@@ -119,8 +119,8 @@ class GameScene extends Phaser.Scene {
 
     this.cameras.main.setBackgroundColor('#a9d0f5'); 
 
-    // --- ESCENARIO NATURAL DE FONDO CLÁSICO ---
-    const sceneryPositions = [40, 320, 600, 880, 1160, 1440, 1720];
+    // --- ESCENARIO NATURAL DE FONDO CLÁSICO (EXTENDIDO A 2500) ---
+    const sceneryPositions = [40, 320, 600, 880, 1160, 1440, 1720, 2000, 2280];
     sceneryPositions.forEach(x => {
       if (this.textures.exists('mountain1')) {
         this.add.image(x, height - 16, 'mountain1').setOrigin(0.5, 1).setScale(0.15).setDepth(1);
@@ -144,14 +144,14 @@ class GameScene extends Phaser.Scene {
     this.mushrooms = this.physics.add.group();
     this.goombas = this.physics.add.group();
 
-    // --- GENERACIÓN DEL SUELO CONTINUO ---
-    for (let x = 0; x < 2000; x += 16) {
+    // --- GENERACIÓN DEL SUELO CONTINUO (EXTENDIDO A 2500) ---
+    for (let x = 0; x < 2500; x += 16) {
       this.floor.create(x, config.height - 16, 'floorbricks').setOrigin(0, 0.5).setDepth(2).refreshBody();
     }
 
-    // --- DISTRIBUCIÓN DEL NIVEL ---
+    // --- DISTRIBUCIÓN DEL NIVEL 1-1 ---
 
-    // 1. Primer Bloque de Misterio Solitario (Contiene un Hongo) - Separado a x: 224
+    // 1. Primer Bloque de Misterio Solitario (Contiene un Hongo)
     this.createMysteryBox(224, config.height - 96, true);
 
     // 2. Primera Estructura Combinada Elevada (Ladrillo - Misterio - Ladrillo - Misterio - Ladrillo)
@@ -164,10 +164,17 @@ class GameScene extends Phaser.Scene {
     // 3. Bloque de Misterio Elevado superior
     this.createMysteryBox(352, config.height - 146, false);
 
-    // 4. Las Tuberías Progresivas
+    // 4. Las Primeras 3 Tuberías Progresivas
     this.floor.create(496, config.height - 32, 'tube-small').setOrigin(0.5, 0.5).setDepth(2).refreshBody();
     this.floor.create(608, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).setDepth(2).refreshBody();
     this.floor.create(720, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).setDepth(2).refreshBody();
+
+    // 5. NUEVO CONTENIDO: Tramo posterior (Hasta la 4ta tubería)
+    // Cuarta Tubería (Grande)
+    this.floor.create(928, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).setDepth(2).refreshBody();
+
+    // Bloque Oculto Elevado (Contiene Hongo) a la derecha de la cuarta tubería
+    this.createMysteryBox(1024, config.height - 112, true);
 
     // --- GENERACIÓN DE ENEMIGOS (GOOMBAS) ---
     if (!this.anims.exists('goomba-walk') && this.textures.exists('goomba')) {
@@ -179,15 +186,17 @@ class GameScene extends Phaser.Scene {
       });
     }
 
-    // --- COLOCACIÓN GENERALIZADA DE GOOMBAS (ALTURAS CORREGIDAS DE RAÍZ) ---
-    // Los que van sobre las plataformas (config.height - 96 - 16 para quedar encima)
+    // --- UBICACIÓN DE GOOMBAS (ALTURAS DE RAÍZ CORREGIDAS) ---
+    // Goombas en plataformas altas
     this.createGoomba(224, config.height - 112); 
     this.createGoomba(352, config.height - 112); 
     
-    // Los que van en el suelo plano (config.height - 40 evita que se hundan en las colisiones físicas)
-    this.createGoomba(665, config.height - 40);
+    // Goombas en el suelo plano (Tramo entre tubo 3 y tubo 4)
+    this.createGoomba(780, config.height - 40);
     this.createGoomba(810, config.height - 40);
-    this.createGoomba(840, config.height - 40);
+
+    // Goombas después de la cuarta tubería
+    this.createGoomba(1120, config.height - 40);
 
     // --- ANIMACIONES Y JUGADOR ---
     if (!this.anims.exists('box-shine') && this.textures.exists('mysteryBox')) {
@@ -222,7 +231,7 @@ class GameScene extends Phaser.Scene {
     this.mario.isEating = false; 
     this.mario.isDead = false;
 
-    this.physics.world.setBounds(0, 0, 2000, config.height);
+    this.physics.world.setBounds(0, 0, 2500, config.height);
     
     // --- COLISIONES ---
     this.physics.add.collider(this.mario, this.floor);
@@ -333,7 +342,7 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    this.cameras.main.setBounds(0, 0, 2000, config.height);
+    this.cameras.main.setBounds(0, 0, 2500, config.height);
     this.cameras.main.startFollow(this.mario);
     this.keys = this.input.keyboard.createCursorKeys();
   }
