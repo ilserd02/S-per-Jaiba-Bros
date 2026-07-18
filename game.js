@@ -22,7 +22,7 @@ class TitleScene extends Phaser.Scene {
     this.load.spritesheet('mysteryBox', 'assets/blocks/overworld/misteryBlock.png', { frameWidth: 16, frameHeight: 16 });
     this.load.image('emptyBox', 'assets/blocks/overworld/emptyBlock.png');
     this.load.image('mushroom', 'assets/collectibles/super-mushroom.png');
-    this.load.spritesheet('coin', 'assets/collectibles/coin.png', { frameWidth: 16, frameHeight: 16 });
+    this.load.spritesheet('coin', 'assets/collectibles/coin.png', { frameWidth: 16, frameHeight: 16 }); 
     
     // Tuberías y bloques normales
     this.load.image('tube-small', 'assets/scenery/vertical-small-tube.png');
@@ -99,7 +99,7 @@ class GameScene extends Phaser.Scene {
 
   create() {
     const height = this.scale.height;
-    const groundY = height - 16; // El suelo firme se dibuja en la base
+    const groundY = height - 16; 
 
     if (this.cache.audio.exists('theme') && !this.sound.get('theme')) {
       this.bgMusic = this.sound.add('theme', { loop: true, volume: 0.5 });
@@ -124,9 +124,9 @@ class GameScene extends Phaser.Scene {
         frameRate: 6, repeat: -1
       });
     }
-    if (!this.anims.exists('coin-spin') && this.textures.exists('coin')) {
+    if (!this.anims.exists('coin-spin') && this.textures.exists('coin')) { 
       this.anims.create({
-        key: 'coin-spin', frames: this.anims.generateFrameNumbers('coin', { start: 0, end: 3 }),
+        key: 'coin-spin', frames: this.anims.generateFrameNumbers('coin', { start: 0, end: 3 }), 
         frameRate: 10, repeat: -1
       });
     }
@@ -137,67 +137,59 @@ class GameScene extends Phaser.Scene {
       });
     }
 
-    // --- CONSTRUCCIÓN DE PLATAFORMAS DE SUELO (CON SUS RESPECTIVOS VACÍOS) ---
-    // Tramo 1: Inicio hasta primer foso
+    // --- CONSTRUCCIÓN DE PLATAFORMAS DE SUELO ---
     for (let x = 0; x < 1120; x += 16) {
       this.floor.create(x + 8, groundY + 8, 'floorbricks').setDepth(2).refreshBody();
     }
-    // Tramo 2: Entre primer foso y segundo foso
     for (let x = 1152; x < 1376; x += 16) {
       this.floor.create(x + 8, groundY + 8, 'floorbricks').setDepth(2).refreshBody();
     }
-    // Tramo 3: Del segundo foso hasta el final
     for (let x = 1424; x < 3500; x += 16) {
       this.floor.create(x + 8, groundY + 8, 'floorbricks').setDepth(2).refreshBody();
     }
 
-    // --- DISTRIBUCIÓN MATEMÁTICA EXACTA DEL MUNDO 1-1 ---
-    
-    // 1. Primer Bloque Sorpresa Solitario (CON HONGO)
+    // --- DISTRIBUCIÓN DEL MUNDO 1-1 ---
     this.createMysteryBox(256, groundY - 56, 'mushroom');
 
-    // 2. Primera estructura combinada (Ladrillos y Bloques Sorpresa con Monedas)
     this.createBrick(320, groundY - 56);
     this.createMysteryBox(336, groundY - 56, 'coin');
     this.createBrick(352, groundY - 56);
     this.createMysteryBox(368, groundY - 56, 'coin');
     this.createBrick(384, groundY - 56);
-    // Bloque sorpresa superior céntrico
     this.createMysteryBox(352, groundY - 104, 'coin');
 
-    // 3. Las Tuberías Iniciales Ordenadas
-    this.createStaticSolid(448, groundY - 16, 'tube-small');
-    this.createStaticSolid(608, groundY - 24, 'tube-medium');
-    this.createStaticSolid(736, groundY - 32, 'tube-large');
+    this.createStaticSolid(448, groundY, 'tube-small');
+    this.createStaticSolid(608, groundY, 'tube-medium');
+    this.createStaticSolid(736, groundY, 'tube-large');
 
-    // 4. Cuarta tubería y el bloque oculto posterior (CON HONGO)
-    this.createStaticSolid(912, groundY - 32, 'tube-large');
+    this.createStaticSolid(912, groundY, 'tube-large');
     this.createMysteryBox(1024, groundY - 56, 'mushroom'); 
 
-    // 5. Estructura flotante intermedia tras los fosos
     this.createBrick(1232, groundY - 56);
     this.createMysteryBox(1248, groundY - 56, 'coin');
     this.createBrick(1264, groundY - 56);
 
     // --- COLOCACIÓN DE ENEMIGOS ---
-    this.createGoomba(300, groundY - 16);
-    this.createGoomba(400, groundY - 16);
-    this.createGoomba(660, groundY - 16);
-    this.createGoomba(820, groundY - 16);
-    this.createGoomba(1000, groundY - 16);
+    this.createGoomba(300, groundY - 8);
+    this.createGoomba(400, groundY - 8);
+    this.createGoomba(660, groundY - 8);
+    this.createGoomba(820, groundY - 8);
+    this.createGoomba(1000, groundY - 8);
 
     this.registerPlayerAnimations();
 
-    // --- JUGADOR (MARIO) ---
-    this.mario = this.physics.add.sprite(80, groundY - 40, 'mario')
+    // --- JUGADOR (JAIBA CORREGIDA) ---
+    // Aparece directamente a nivel de suelo para que no empiece atorada
+    this.mario = this.physics.add.sprite(80, groundY - 24, 'mario')
       .setOrigin(0.5, 0.5)
       .setCollideWorldBounds(true)
-      .setGravityY(350)
+      .setGravityY(400)
       .setDepth(4)
       .setScale(0.163);
       
-    this.mario.body.setSize(160, 240);
-    this.mario.body.setOffset(56, 300);
+    // MODIFICACIÓN CRÍTICA: Ajuste perfecto de la Hitbox para que no se hunda
+    this.mario.body.setSize(150, 240);
+    this.mario.body.setOffset(61, 280); 
     
     this.mario.isBig = false; 
     this.mario.isEating = false; 
@@ -205,7 +197,7 @@ class GameScene extends Phaser.Scene {
 
     this.physics.world.setBounds(0, 0, 3500, height);
 
-    // --- INTERFAZ DEL CONTADOR (UI FIJA) ---
+    // --- INTERFAZ DEL CONTADOR (UI) ---
     this.coinText = this.add.text(16, 16, 'MONEDAS: 0', {
       fontFamily: '"Courier New", Courier, monospace',
       fontSize: '12px',
@@ -223,7 +215,7 @@ class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.goombas, this.bricks);
     this.physics.add.collider(this.goombas, this.mysteryBoxes);
 
-    // Al cabecear los Bloques Sorpresa
+    // Al golpear los Bloques Sorpresa
     this.physics.add.collider(this.mario, this.mysteryBoxes, (mario, boxHit) => {
       if (mario.body.touching.up) {
         if (boxHit.content !== 'empty') {
@@ -245,7 +237,7 @@ class GameScene extends Phaser.Scene {
             this.coinsCollected++;
             this.coinText.setText('MONEDAS: ' + this.coinsCollected);
 
-            const animatedCoin = this.add.sprite(boxHit.x, boxHit.y - 12, 'coin').setDepth(3);
+            const animatedCoin = this.add.sprite(boxHit.x, boxHit.y - 12, 'coin').setDepth(3); 
             animatedCoin.play('coin-spin');
 
             this.tweens.add({
@@ -278,8 +270,8 @@ class GameScene extends Phaser.Scene {
         
         if (this.textures.exists('jaiba-eating') && this.anims.exists('jaiba-eat-mushroom')) {
           mario.setTexture('jaiba-eating');
-          mario.body.setSize(160, 240);
-          mario.body.setOffset(48, 760);
+          mario.body.setSize(150, 240);
+          mario.body.setOffset(53, 760);
           mario.anims.play('jaiba-eat-mushroom');
 
           mario.once('animationcomplete-jaiba-eat-mushroom', () => {
@@ -312,8 +304,8 @@ class GameScene extends Phaser.Scene {
           mario.isBig = false;
           mario.setTexture('mario'); 
           mario.setScale(0.163); 
-          mario.body.setSize(160, 240);
-          mario.body.setOffset(56, 300);
+          mario.body.setSize(150, 240);
+          mario.body.setOffset(61, 280);
           mario.body.reset(mario.x, mario.y);
           goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30;
         } else {
@@ -380,8 +372,8 @@ class GameScene extends Phaser.Scene {
       mario.setScale(0.187); 
     }
     mario.y -= 20; 
-    mario.body.setSize(160, 180);
-    mario.body.setOffset(56, 360);
+    mario.body.setSize(150, 180);
+    mario.body.setOffset(61, 340);
     mario.body.reset(mario.x, mario.y);
   }
 
@@ -410,7 +402,6 @@ class GameScene extends Phaser.Scene {
         frameRate: 6, repeat: 0
       });
     }
-    // ARREGLADO: Solo lee el frame 0 para evitar el error de consola "Frame 5 not found"
     if (!this.anims.exists('jaiba-dead') && this.textures.exists('mario-dead')) {
       this.anims.create({
         key: 'jaiba-dead', frames: [{ key: 'mario-dead', frame: 0 }],
@@ -446,7 +437,7 @@ class GameScene extends Phaser.Scene {
     }
 
     if (this.keys.up.isDown && this.mario.body.touching.down) {
-      this.mario.setVelocityY(-300);
+      this.mario.setVelocityY(-260); // Ajustado para un salto más fluido y controlado
       if (this.cache.audio.exists('jump')) this.sound.play('jump');
     }
 
@@ -481,7 +472,7 @@ const config = {
   parent: 'game',
   physics: {
     default: 'arcade',
-    arcade: { gravity: { y: 300 }, debug: false }
+    arcade: { gravity: { y: 400 }, debug: false }
   },
   scene: [TitleScene, GameScene]
 };
