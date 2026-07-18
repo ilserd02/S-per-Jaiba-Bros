@@ -22,6 +22,7 @@ class TitleScene extends Phaser.Scene {
     this.load.spritesheet('mysteryBox', 'assets/blocks/overworld/misteryBlock.png', { frameWidth: 16, frameHeight: 16 });
     this.load.image('emptyBox', 'assets/blocks/overworld/emptyBlock.png');
     this.load.image('mushroom', 'assets/collectibles/super-mushroom.png');
+    this.load.spritesheet('coin', 'assets/collectibles/coin.png', { frameWidth: 16, frameHeight: 16 });
     
     // Tuberías y bloques normales
     this.load.image('tube-small', 'assets/scenery/vertical-small-tube.png');
@@ -107,6 +108,10 @@ class GameScene extends Phaser.Scene {
     super({ key: 'GameScene' });
   }
 
+  init() {
+    this.coinsCollected = 0; 
+  }
+
   create() {
     const height = this.scale.height;
 
@@ -119,8 +124,8 @@ class GameScene extends Phaser.Scene {
 
     this.cameras.main.setBackgroundColor('#a9d0f5'); 
 
-    // --- ESCENARIO NATURAL DE FONDO CLÁSICO (EXTENDIDO A 2500) ---
-    const sceneryPositions = [40, 320, 600, 880, 1160, 1440, 1720, 2000, 2280];
+    // --- ESCENARIO NATURAL DE FONDO CLÁSICO ---
+    const sceneryPositions = [40, 320, 600, 880, 1160, 1440, 1720, 2000, 2280, 2560, 2840, 3120];
     sceneryPositions.forEach(x => {
       if (this.textures.exists('mountain1')) {
         this.add.image(x, height - 16, 'mountain1').setOrigin(0.5, 1).setScale(0.15).setDepth(1);
@@ -144,39 +149,65 @@ class GameScene extends Phaser.Scene {
     this.mushrooms = this.physics.add.group();
     this.goombas = this.physics.add.group();
 
-    // --- GENERACIÓN DEL SUELO CONTINUO (EXTENDIDO A 2500) ---
-    for (let x = 0; x < 2500; x += 16) {
+    // --- GENERACIÓN DEL SUELO CON FOSOS ---
+    for (let x = 0; x < 1200; x += 16) {
+      this.floor.create(x, config.height - 16, 'floorbricks').setOrigin(0, 0.5).setDepth(2).refreshBody();
+    }
+    for (let x = 1232; x < 3500; x += 16) {
       this.floor.create(x, config.height - 16, 'floorbricks').setOrigin(0, 0.5).setDepth(2).refreshBody();
     }
 
-    // --- DISTRIBUCIÓN DEL NIVEL 1-1 ---
+    // --- DISTRIBUCIÓN TOTAL DEL NIVEL 1-1 ---
 
-    // 1. Primer Bloque de Misterio Solitario (Contiene un Hongo)
-    this.createMysteryBox(224, config.height - 96, true);
+    // 1. Primer bloque sorpresa solitario (CON HONGO)
+    this.createMysteryBox(224, config.height - 96, 'mushroom');
 
-    // 2. Primera Estructura Combinada Elevada (Ladrillo - Misterio - Ladrillo - Misterio - Ladrillo)
+    // 2. Fila combinada (Ladrillo-Moneda-Ladrillo-Moneda-Ladrillo)
     this.createBrick(320, config.height - 96);
-    this.createMysteryBox(336, config.height - 96, false); 
+    this.createMysteryBox(336, config.height - 96, 'coin'); 
     this.createBrick(352, config.height - 96);
-    this.createMysteryBox(368, config.height - 96, false); 
+    this.createMysteryBox(368, config.height - 96, 'coin'); 
     this.createBrick(384, config.height - 96);
+    this.createMysteryBox(352, config.height - 146, 'coin'); // Bloque alto central
 
-    // 3. Bloque de Misterio Elevado superior
-    this.createMysteryBox(352, config.height - 146, false);
-
-    // 4. Las Primeras 3 Tuberías Progresivas
+    // 3. Tuberías Progresivas Iniciales
     this.floor.create(496, config.height - 32, 'tube-small').setOrigin(0.5, 0.5).setDepth(2).refreshBody();
     this.floor.create(608, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).setDepth(2).refreshBody();
     this.floor.create(720, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).setDepth(2).refreshBody();
 
-    // 5. NUEVO CONTENIDO: Tramo posterior (Hasta la 4ta tubería)
-    // Cuarta Tubería (Grande)
+    // 4. Cuarta tubería y bloque oculto (CON HONGO)
     this.floor.create(928, config.height - 48, 'tube-large').setOrigin(0.5, 0.5).setDepth(2).refreshBody();
+    this.createMysteryBox(1024, config.height - 112, 'mushroom');
 
-    // Bloque Oculto Elevado (Contiene Hongo) a la derecha de la cuarta tubería
-    this.createMysteryBox(1024, config.height - 112, true);
+    // 5. Estructuras flotantes posteriores
+    this.createBrick(1280, config.height - 96);
+    this.createBrick(1296, config.height - 96);
+    this.createBrick(1312, config.height - 96);
+    
+    // Grupo de bloques posterior con bloques sorpresa (MONEDAS)
+    this.createBrick(1440, config.height - 96);
+    this.createMysteryBox(1456, config.height - 96, 'coin');
+    this.createMysteryBox(1472, config.height - 96, 'coin');
+    this.createBrick(1488, config.height - 96);
 
-    // --- GENERACIÓN DE ENEMIGOS (GOOMBAS) ---
+    // 6. Escaleras de la pirámide
+    this.createBrick(2000, config.height - 32);
+    this.createBrick(2016, config.height - 32);
+    this.createBrick(2016, config.height - 48);
+    this.createBrick(2032, config.height - 32);
+    this.createBrick(2032, config.height - 48);
+    this.createBrick(2032, config.height - 64);
+
+    this.createBrick(2064, config.height - 64);
+    this.createBrick(2064, config.height - 48);
+    this.createBrick(2064, config.height - 32);
+    this.createBrick(2080, config.height - 48);
+    this.createBrick(2080, config.height - 32);
+    this.createBrick(2096, config.height - 32);
+
+    this.floor.create(2300, config.height - 40, 'tube-medium').setOrigin(0.5, 0.5).setDepth(2).refreshBody();
+
+    // --- GENERACIÓN DE ENEMIGOS ---
     if (!this.anims.exists('goomba-walk') && this.textures.exists('goomba')) {
       this.anims.create({
         key: 'goomba-walk',
@@ -186,24 +217,30 @@ class GameScene extends Phaser.Scene {
       });
     }
 
-    // --- UBICACIÓN DE GOOMBAS (ALTURAS DE RAÍZ CORREGIDAS) ---
-    // Goombas en plataformas altas
     this.createGoomba(224, config.height - 112); 
     this.createGoomba(352, config.height - 112); 
-    
-    // Goombas en el suelo plano (Tramo entre tubo 3 y tubo 4)
     this.createGoomba(780, config.height - 40);
     this.createGoomba(810, config.height - 40);
-
-    // Goombas después de la cuarta tubería
     this.createGoomba(1120, config.height - 40);
+    this.createGoomba(1288, config.height - 112);
+    this.createGoomba(1304, config.height - 112);
+    this.createGoomba(1650, config.height - 40);
+    this.createGoomba(1680, config.height - 40);
 
-    // --- ANIMACIONES Y JUGADOR ---
+    // --- ANIMACIONES GENERALES ---
     if (!this.anims.exists('box-shine') && this.textures.exists('mysteryBox')) {
       this.anims.create({
         key: 'box-shine',
         frames: this.anims.generateFrameNumbers('mysteryBox', { start: 0, end: 2 }),
         frameRate: 6,
+        repeat: -1
+      });
+    }
+    if (!this.anims.exists('coin-spin') && this.textures.exists('coin')) {
+      this.anims.create({
+        key: 'coin-spin',
+        frames: this.anims.generateFrameNumbers('coin', { start: 0, end: 3 }),
+        frameRate: 10,
         repeat: -1
       });
     }
@@ -216,7 +253,7 @@ class GameScene extends Phaser.Scene {
 
     this.registerPlayerAnimations();
 
-    // Creación de la Jaiba (Jugador)
+    // --- JUGADOR ---
     this.mario = this.physics.add.sprite(50, 100, 'mario')
       .setOrigin(0.5, 0.5)
       .setCollideWorldBounds(true)
@@ -231,7 +268,16 @@ class GameScene extends Phaser.Scene {
     this.mario.isEating = false; 
     this.mario.isDead = false;
 
-    this.physics.world.setBounds(0, 0, 2500, config.height);
+    this.physics.world.setBounds(0, 0, 3500, config.height);
+
+    // --- TEXTO DEL CONTADOR DE MONEDAS (UI FIXED) ---
+    this.coinText = this.add.text(16, 16, 'MONEDAS: 0', {
+      fontFamily: '"Courier New", Courier, monospace',
+      fontSize: '12px',
+      fill: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setDepth(10).setScrollFactor(0);
     
     // --- COLISIONES ---
     this.physics.add.collider(this.mario, this.floor);
@@ -245,17 +291,41 @@ class GameScene extends Phaser.Scene {
     // Interacción con bloques sorpresa
     this.physics.add.collider(this.mario, this.mysteryBoxes, (mario, boxHit) => {
       if (mario.body.touching.up) {
-        if (boxHit.hasItem) {
-          boxHit.hasItem = false;
+        if (boxHit.content !== 'empty') {
+          const contentType = boxHit.content;
+          boxHit.content = 'empty';
+          
           if (this.anims.exists('box-shine')) boxHit.anims.stop();
           if (this.textures.exists('emptyBox')) boxHit.setTexture('emptyBox'); 
           boxHit.refreshBody();
 
-          if (this.cache.audio.exists('sprout')) this.sound.play('sprout');
+          if (contentType === 'mushroom') {
+            if (this.cache.audio.exists('sprout')) this.sound.play('sprout');
+            const mushroom = this.mushrooms.create(boxHit.x, boxHit.y - 16, 'mushroom').setDepth(3);
+            mushroom.setOrigin(0.5, 0.5);
+            mushroom.setVelocityX(50); 
+          } 
+          else if (contentType === 'coin') {
+            if (this.cache.audio.exists('powerup')) this.sound.play('powerup');
+            
+            // Incrementar contador
+            this.coinsCollected++;
+            this.coinText.setText('MONEDAS: ' + this.coinsCollected);
 
-          const mushroom = this.mushrooms.create(boxHit.x, boxHit.y - 16, 'mushroom').setDepth(3);
-          mushroom.setOrigin(0.5, 0.5);
-          mushroom.setVelocityX(50); 
+            // Crear y animar la moneda saltando
+            const animatedCoin = this.add.sprite(boxHit.x, boxHit.y - 12, 'coin').setDepth(3);
+            if (this.anims.exists('coin-spin')) animatedCoin.play('coin-spin');
+
+            this.tweens.add({
+              targets: animatedCoin,
+              y: boxHit.y - 40,
+              alpha: 0,
+              duration: 400,
+              yoyo: true,
+              hold: 50,
+              onComplete: () => { animatedCoin.destroy(); }
+            });
+          }
         } else {
           if (this.cache.audio.exists('bump')) this.sound.play('bump');
         }
@@ -342,14 +412,14 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    this.cameras.main.setBounds(0, 0, 2500, config.height);
+    this.cameras.main.setBounds(0, 0, 3500, config.height);
     this.cameras.main.startFollow(this.mario);
     this.keys = this.input.keyboard.createCursorKeys();
   }
 
-  createMysteryBox(x, y, hasItem) {
+  createMysteryBox(x, y, contentType) {
     const box = this.mysteryBoxes.create(x, y, 'mysteryBox').setOrigin(0.5).setDepth(2).refreshBody();
-    box.hasItem = hasItem;
+    box.content = contentType; // Puede ser 'mushroom', 'coin' o 'empty'
     return box;
   }
 
@@ -454,7 +524,7 @@ class GameScene extends Phaser.Scene {
       if (this.cache.audio.exists('jump')) this.sound.play('jump');
     }
 
-    if (this.mario.y >= config.height) {
+    if (this.mario.y >= config.height + 20) {
       this.mario.isDead = true;
       if (this.bgMusic) this.bgMusic.stop();
       if (this.cache.audio.exists('gameover')) this.sound.play('gameover');
