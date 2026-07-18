@@ -149,7 +149,7 @@ class GameScene extends Phaser.Scene {
       this.floor.create(x, config.height - 16, 'floorbricks').setOrigin(0, 0.5).setDepth(2).refreshBody();
     }
 
-    // --- DISTRIBUCIÓN DEL NIVEL CORREGIDA (BLOQUES SEPARADOS Y ALTURA ALTA) ---
+    // --- DISTRIBUCIÓN DEL NIVEL ---
 
     // 1. Primer Bloque de Misterio Solitario (Contiene un Hongo) - Separado a x: 224
     this.createMysteryBox(224, config.height - 96, true);
@@ -179,14 +179,15 @@ class GameScene extends Phaser.Scene {
       });
     }
 
-    // Ubicaciones de Goombas ajustadas: Los primeros caminan arriba de los bloques
-    this.createGoomba(224, config.height - 112); // Arriba del bloque solitario
-    this.createGoomba(352, config.height - 112); // Arriba de la hilera larga
+    // --- COLOCACIÓN GENERALIZADA DE GOOMBAS (ALTURAS CORREGIDAS DE RAÍZ) ---
+    // Los que van sobre las plataformas (config.height - 96 - 16 para quedar encima)
+    this.createGoomba(224, config.height - 112); 
+    this.createGoomba(352, config.height - 112); 
     
-    // Los demás Goombas se quedan patrullando en el piso plano después de las estructuras
-    this.createGoomba(665, config.height - 30);
-    this.createGoomba(810, config.height - 30);
-    this.createGoomba(840, config.height - 30);
+    // Los que van en el suelo plano (config.height - 40 evita que se hundan en las colisiones físicas)
+    this.createGoomba(665, config.height - 40);
+    this.createGoomba(810, config.height - 40);
+    this.createGoomba(840, config.height - 40);
 
     // --- ANIMACIONES Y JUGADOR ---
     if (!this.anims.exists('box-shine') && this.textures.exists('mysteryBox')) {
