@@ -99,6 +99,7 @@ class GameScene extends Phaser.Scene {
 
   create() {
     const height = this.scale.height;
+    const groundY = height - 16; // El suelo firme se dibuja en la base
 
     if (this.cache.audio.exists('theme') && !this.sound.get('theme')) {
       this.bgMusic = this.sound.add('theme', { loop: true, volume: 0.5 });
@@ -109,26 +110,6 @@ class GameScene extends Phaser.Scene {
 
     this.cameras.main.setBackgroundColor('#a9d0f5'); 
 
-    // --- DICTADO DEL MAPA IDÉNTICO AL ORIGINAL ---
-    // Cada línea tiene exactamente la misma longitud y altura que el nivel 1-1
-    const nivel11 = [
-      "..................................................................................................................................................",
-      "..................................................................................................................................................",
-      "..................................................................................................................................................",
-      "..................................................................................................................................................",
-      "..................................................................................................................................................",
-      "..................................................................................................................................................",
-      "..................................................................................................................................................",
-      "....................................$.............................................................................................................",
-      "..................................................................................................................................................",
-      "..................................................................................................................................................",
-      "........................B.B.B..........................................................BB$BB.......................................................",
-      ".......................1......2......3.......3......M.................................B.....B......................................................",
-      "....M....B$B$B........11.....22.....33......33....................BBB................B.......B.....................................................",
-      "XXXXXXXXXXXXXXXXXXXX..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-      "XXXXXXXXXXXXXXXXXXXX..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-    ];
-
     // --- GRUPOS FÍSICOS ---
     this.floor = this.physics.add.staticGroup();
     this.mysteryBoxes = this.physics.add.staticGroup();
@@ -136,7 +117,7 @@ class GameScene extends Phaser.Scene {
     this.mushrooms = this.physics.add.group();
     this.goombas = this.physics.add.group();
 
-    // --- ANIMACIONES GENERALES DEL ENTORNO ---
+    // --- ANIMACIONES DEL ENTORNO ---
     if (!this.anims.exists('box-shine') && this.textures.exists('mysteryBox')) {
       this.anims.create({
         key: 'box-shine', frames: this.anims.generateFrameNumbers('mysteryBox', { start: 0, end: 2 }),
@@ -156,56 +137,62 @@ class GameScene extends Phaser.Scene {
       });
     }
 
-    // --- PROCESADOR Y DIBUJANTE DE LA MATRIZ ---
-    for (let fila = 0; fila < nivel11.length; fila++) {
-      for (let col = 0; col < nivel11[fila].length; col++) {
-        let caracter = nivel11[fila][col];
-        let posX = col * 16 + 8;
-        let posY = fila * 16 + 8;
-
-        if (caracter === 'X') {
-          this.floor.create(posX, posY, 'floorbricks').setDepth(2).refreshBody();
-        } else if (caracter === 'B') {
-          this.bricks.create(posX, posY, 'brick').setDepth(2).refreshBody();
-        } else if (caracter === 'M') {
-          let box = this.mysteryBoxes.create(posX, posY, 'mysteryBox').setDepth(2).refreshBody();
-          box.content = 'mushroom';
-          box.anims.play('box-shine', true);
-        } else if (caracter === '$') {
-          let box = this.mysteryBoxes.create(posX, posY, 'mysteryBox').setDepth(2).refreshBody();
-          box.content = 'coin';
-          box.anims.play('box-shine', true);
-        } else if (caracter === '1') {
-          // Reemplaza la base de la tubería para que no flote de forma manual
-          let obj = this.add.image(posX + 8, posY + 8, 'tube-small').setOrigin(0.5, 0.5).setDepth(2);
-          this.physics.add.existing(obj, true);
-          this.floor.add(obj);
-        } else if (caracter === '2') {
-          let obj = this.add.image(posX + 8, posY + 4, 'tube-medium').setOrigin(0.5, 0.5).setDepth(2);
-          this.physics.add.existing(obj, true);
-          this.floor.add(obj);
-        } else if (caracter === '3') {
-          let obj = this.add.image(posX + 8, posY, 'tube-large').setOrigin(0.5, 0.5).setDepth(2);
-          this.physics.add.existing(obj, true);
-          this.floor.add(obj);
-        }
-      }
+    // --- CONSTRUCCIÓN DE PLATAFORMAS DE SUELO (CON SUS RESPECTIVOS VACÍOS) ---
+    // Tramo 1: Inicio hasta primer foso
+    for (let x = 0; x < 1120; x += 16) {
+      this.floor.create(x + 8, groundY + 8, 'floorbricks').setDepth(2).refreshBody();
+    }
+    // Tramo 2: Entre primer foso y segundo foso
+    for (let x = 1152; x < 1376; x += 16) {
+      this.floor.create(x + 8, groundY + 8, 'floorbricks').setDepth(2).refreshBody();
+    }
+    // Tramo 3: Del segundo foso hasta el final
+    for (let x = 1424; x < 3500; x += 16) {
+      this.floor.create(x + 8, groundY + 8, 'floorbricks').setDepth(2).refreshBody();
     }
 
-    // --- GENERACIÓN DE ENEMIGOS EN PUNTOS EXACTOS DEL MAPA ---
-    this.createGoomba(250, 150);
-    this.createGoomba(400, 150);
-    this.createGoomba(750, 150);
-    this.createGoomba(900, 150);
-    this.createGoomba(1300, 150);
+    // --- DISTRIBUCIÓN MATEMÁTICA EXACTA DEL MUNDO 1-1 ---
+    
+    // 1. Primer Bloque Sorpresa Solitario (CON HONGO)
+    this.createMysteryBox(256, groundY - 56, 'mushroom');
+
+    // 2. Primera estructura combinada (Ladrillos y Bloques Sorpresa con Monedas)
+    this.createBrick(320, groundY - 56);
+    this.createMysteryBox(336, groundY - 56, 'coin');
+    this.createBrick(352, groundY - 56);
+    this.createMysteryBox(368, groundY - 56, 'coin');
+    this.createBrick(384, groundY - 56);
+    // Bloque sorpresa superior céntrico
+    this.createMysteryBox(352, groundY - 104, 'coin');
+
+    // 3. Las Tuberías Iniciales Ordenadas
+    this.createStaticSolid(448, groundY - 16, 'tube-small');
+    this.createStaticSolid(608, groundY - 24, 'tube-medium');
+    this.createStaticSolid(736, groundY - 32, 'tube-large');
+
+    // 4. Cuarta tubería y el bloque oculto posterior (CON HONGO)
+    this.createStaticSolid(912, groundY - 32, 'tube-large');
+    this.createMysteryBox(1024, groundY - 56, 'mushroom'); 
+
+    // 5. Estructura flotante intermedia tras los fosos
+    this.createBrick(1232, groundY - 56);
+    this.createMysteryBox(1248, groundY - 56, 'coin');
+    this.createBrick(1264, groundY - 56);
+
+    // --- COLOCACIÓN DE ENEMIGOS ---
+    this.createGoomba(300, groundY - 16);
+    this.createGoomba(400, groundY - 16);
+    this.createGoomba(660, groundY - 16);
+    this.createGoomba(820, groundY - 16);
+    this.createGoomba(1000, groundY - 16);
 
     this.registerPlayerAnimations();
 
     // --- JUGADOR (MARIO) ---
-    this.mario = this.physics.add.sprite(50, 100, 'mario')
+    this.mario = this.physics.add.sprite(80, groundY - 40, 'mario')
       .setOrigin(0.5, 0.5)
       .setCollideWorldBounds(true)
-      .setGravityY(300)
+      .setGravityY(350)
       .setDepth(4)
       .setScale(0.163);
       
@@ -216,11 +203,9 @@ class GameScene extends Phaser.Scene {
     this.mario.isEating = false; 
     this.mario.isDead = false;
 
-    // Calcular el tamaño total dinámico del mundo según el largo de la matriz
-    const totalMundoX = nivel11[0].length * 16;
-    this.physics.world.setBounds(0, 0, totalMundoX, height);
+    this.physics.world.setBounds(0, 0, 3500, height);
 
-    // --- TEXTO FIJO DEL CONTADOR EN PANTALLA ---
+    // --- INTERFAZ DEL CONTADOR (UI FIJA) ---
     this.coinText = this.add.text(16, 16, 'MONEDAS: 0', {
       fontFamily: '"Courier New", Courier, monospace',
       fontSize: '12px',
@@ -229,7 +214,7 @@ class GameScene extends Phaser.Scene {
       strokeThickness: 3
     }).setDepth(10).setScrollFactor(0);
     
-    // --- LÓGICA DE COLISIONES ---
+    // --- CONFIGURACIÓN DE COLISIONES ---
     this.physics.add.collider(this.mario, this.floor);
     this.physics.add.collider(this.mario, this.bricks);
     this.physics.add.collider(this.mushrooms, this.floor);
@@ -238,7 +223,7 @@ class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.goombas, this.bricks);
     this.physics.add.collider(this.goombas, this.mysteryBoxes);
 
-    // Al golpear bloques sorpresas
+    // Al cabecear los Bloques Sorpresa
     this.physics.add.collider(this.mario, this.mysteryBoxes, (mario, boxHit) => {
       if (mario.body.touching.up) {
         if (boxHit.content !== 'empty') {
@@ -257,11 +242,9 @@ class GameScene extends Phaser.Scene {
           else if (contentType === 'coin') {
             if (this.cache.audio.exists('powerup')) this.sound.play('powerup');
             
-            // Sumar al contador UI
             this.coinsCollected++;
             this.coinText.setText('MONEDAS: ' + this.coinsCollected);
 
-            // Crear efecto visual de moneda saltarina
             const animatedCoin = this.add.sprite(boxHit.x, boxHit.y - 12, 'coin').setDepth(3);
             animatedCoin.play('coin-spin');
 
@@ -281,7 +264,7 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    // Recoger hongo
+    // Conseguir el Champiñón
     this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
       if (mario.isEating || mario.isDead) return;
       mushroomHit.destroy(); 
@@ -308,7 +291,7 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    // Colisión con enemigos
+    // Colisión contra Goombas
     this.physics.add.collider(this.mario, this.goombas, (mario, goombaHit) => {
       if (mario.isEating || mario.isDead) return;
       
@@ -355,13 +338,31 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    this.cameras.main.setBounds(0, 0, totalMundoX, height);
+    this.cameras.main.setBounds(0, 0, 3500, height);
     this.cameras.main.startFollow(this.mario);
     this.keys = this.input.keyboard.createCursorKeys();
   }
 
+  createMysteryBox(x, y, contentType) {
+    const box = this.mysteryBoxes.create(x, y, 'mysteryBox').setOrigin(0.5).setDepth(2).refreshBody();
+    box.content = contentType;
+    if (this.anims.exists('box-shine')) box.anims.play('box-shine', true);
+    return box;
+  }
+
+  createBrick(x, y) {
+    return this.bricks.create(x, y, 'brick').setOrigin(0.5).setDepth(2).refreshBody();
+  }
+
+  createStaticSolid(x, y, assetKey) {
+    let element = this.add.image(x, y, assetKey).setOrigin(0.5, 1).setDepth(2);
+    this.physics.add.existing(element, true);
+    this.floor.add(element);
+    return element;
+  }
+
   createGoomba(x, y) {
-    const goomba = this.goombas.create(x, y, 'goomba').setOrigin(0.5).setDepth(3);
+    const goomba = this.goombas.create(x, y, 'goomba').setOrigin(0.5, 1).setDepth(3);
     goomba.setVelocityX(-35);
     goomba.setCollideWorldBounds(true);
     goomba.body.setBounce(1, 0); 
@@ -409,9 +410,10 @@ class GameScene extends Phaser.Scene {
         frameRate: 6, repeat: 0
       });
     }
+    // ARREGLADO: Solo lee el frame 0 para evitar el error de consola "Frame 5 not found"
     if (!this.anims.exists('jaiba-dead') && this.textures.exists('mario-dead')) {
       this.anims.create({
-        key: 'jaiba-dead', frames: this.anims.generateFrameNumbers('mario-dead', { start: 0, end: 5 }),
+        key: 'jaiba-dead', frames: [{ key: 'mario-dead', frame: 0 }],
         frameRate: 4, repeat: 0
       });
     }
@@ -419,7 +421,7 @@ class GameScene extends Phaser.Scene {
 
   update() {
     this.goombas.children.iterate(goomba => {
-      if (goomba && goomba.body && goomba.body.enable) {
+      if (goomba && goomba.body && goomba.body.enable && this.anims.exists('goomba-walk')) {
         goomba.anims.play('goomba-walk', true);
         goomba.flipX = goomba.body.velocity.x > 0;
       }
