@@ -122,10 +122,10 @@ class GameScene extends Phaser.Scene {
       "..........................................................................................................................................................................................................F........",
       ".........................................................................................................BBBBBB...........................................................................................F........",
       ".......................................................$M$M$.............................................................................................................................L................F..HHHHHH",
-      "....................BBBBB.........................................................................................................33....................................................LL................F..HHHHHH",
-      "......................................................................22..........................................................33...................................................LLL................F..HHHHHH",
-      "..............................11......................................22..........................................................33..................................................LLLL................F..HHHHHH",
-      "..................G...........11...............G..................G...22.............G................................G...........33.............G.............................G.....LLLLL................F..HHHHHH",
+      "....................BBBBB.........................................................................................................3.....................................................LL................F..HHHHHH",
+      "......................................................................2...........................................................3....................................................LLL................F..HHHHHH",
+      "..............................1.......................................2...........................................................3...................................................LLLL................F..HHHHHH",
+      "..................G...........1................G..................G...2..............G................................G...........3..............G.............................G.....LLLLL................F..HHHHHH",
       "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX...XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX....XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
       "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX...XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX....XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
     ];
@@ -190,11 +190,14 @@ class GameScene extends Phaser.Scene {
             if (this.anims.exists('coin-spin')) coin.play('coin-spin');
           }
         } else if (char === '1') {
-          this.createStaticSolid(posX, posY, 'tube-small');
+          // Tubería pequeña: 32px de ancho x 32px de alto (2 bloques de alto)
+          this.createPipe(posX + 8, posY + 8, 'tube-small', 32, 32);
         } else if (char === '2') {
-          this.createStaticSolid(posX, posY, 'tube-medium');
+          // Tubería mediana: 32px de ancho x 48px de alto (3 bloques de alto)
+          this.createPipe(posX + 8, posY + 8, 'tube-medium', 32, 48);
         } else if (char === '3') {
-          this.createStaticSolid(posX, posY, 'tube-large');
+          // Tubería grande: 32px de ancho x 64px de alto (4 bloques de alto)
+          this.createPipe(posX + 8, posY + 8, 'tube-large', 32, 64);
         } else if (char === 'G') {
           this.createGoomba(posX, posY - 16);
         }
@@ -211,9 +214,9 @@ class GameScene extends Phaser.Scene {
       .setCollideWorldBounds(true)
       .setGravityY(400)
       .setDepth(4)
-      .setScale(0.12); // Escala normal ligeramente más ajustada
+      .setScale(0.12);
       
-    // HITBOX REDUCIDA: Para que quepa fácilmente debajo de bloques de 16px
+    // Hitbox ajustada para deslizarse bajo bloques sin problemas
     this.mario.body.setSize(100, 200);
     this.mario.body.setOffset(86, 330); 
     
@@ -346,11 +349,10 @@ class GameScene extends Phaser.Scene {
           mario.body.reset(mario.x, mario.y);
           goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30;
         } else {
-          // --- SECUENCIA DE MUERTE CORREGIDA ---
+          // --- SECUENCIA DE MUERTE ---
           mario.isDead = true;
           if (this.bgMusic) this.bgMusic.stop();
           
-          // Se inhabilita por completo la física para que atraviese libremente el suelo/bloques
           mario.body.enable = false;
           
           if (this.cache.audio.exists('gameover')) this.sound.play('gameover');
@@ -358,27 +360,16 @@ class GameScene extends Phaser.Scene {
           if (this.textures.exists('mario-dead')) {
             mario.anims.stop();
             mario.setTexture('mario-dead');
-            
-            // Mantiene proporciones reales de la imagen sin estirarse
             mario.setOrigin(0.5, 0.5);
-            mario.setDisplaySize(16, 16); // Tamaño exacto de un bloque NES (16x16)
+            mario.setDisplaySize(16, 16);
             mario.setDepth(20);
           }
 
-          // Salto y caída limpia
           this.tweens.chain({
             targets: mario,
             tweens: [
-              {
-                y: mario.y - 20,
-                duration: 250,
-                ease: 'Power1'
-              },
-              {
-                y: this.scale.height + 40,
-                duration: 750,
-                ease: 'Power2'
-              }
+              { y: mario.y - 20, duration: 250, ease: 'Power1' },
+              { y: this.scale.height + 40, duration: 750, ease: 'Power2' }
             ],
             onComplete: () => { showGameOverMenu(this); }
           });
@@ -391,12 +382,17 @@ class GameScene extends Phaser.Scene {
     this.keys = this.input.keyboard.createCursorKeys();
   }
 
-  createStaticSolid(x, y, assetKey) {
+  // Helper para construir tuberías sólidas bien escaladas
+  createPipe(x, y, assetKey, width, height) {
     if (!this.textures.exists(assetKey)) return null;
-    let element = this.add.image(x, y, assetKey).setOrigin(0.5, 0.5).setDepth(2);
-    this.physics.add.existing(element, true);
-    this.floor.add(element);
-    return element;
+    let pipe = this.add.image(x, y, assetKey)
+      .setOrigin(0.5, 1)
+      .setDisplaySize(width, height)
+      .setDepth(2);
+    
+    this.physics.add.existing(pipe, true);
+    this.floor.add(pipe);
+    return pipe;
   }
 
   createGoomba(x, y) {
