@@ -164,18 +164,14 @@ class GameScene extends Phaser.Scene {
         const posY = startY + (fila * tileSize) + (tileSize / 2);
 
         if (char === 'X' || char === 'L' || char === 'H') {
-          // Bloques sólidos (Suelo, Escalones, Castillo)
           this.floor.create(posX, posY, 'floorbricks').setDepth(2).refreshBody();
         } else if (char === 'B') {
-          // Ladrillos
           this.bricks.create(posX, posY, 'brick').setDepth(2).refreshBody();
         } else if (char === '$') {
-          // Bloque sorpresa de moneda
           let box = this.mysteryBoxes.create(posX, posY, 'mysteryBox').setDepth(2).refreshBody();
           box.content = 'coin';
           if (this.anims.exists('box-shine')) box.anims.play('box-shine', true);
         } else if (char === 'M') {
-          // Bloque sorpresa de hongo
           let box = this.mysteryBoxes.create(posX, posY, 'mysteryBox').setDepth(2).refreshBody();
           box.content = 'mushroom';
           if (this.anims.exists('box-shine')) box.anims.play('box-shine', true);
@@ -195,17 +191,20 @@ class GameScene extends Phaser.Scene {
 
     this.registerPlayerAnimations();
 
-    // --- JUGADOR (JAIBA) ---
-    const groundY = height - 16;
-    this.mario = this.physics.add.sprite(50, groundY - 24, 'mario')
+    // --- CORRECCIÓN DE POSICIÓN DE LA JAIBA ---
+    // Calculamos exactamente la superficie superior de la primera fila de suelo (Fila 13 de la matriz)
+    const groundTopY = startY + (13 * tileSize);
+
+    this.mario = this.physics.add.sprite(50, groundTopY - 32, 'mario')
       .setOrigin(0.5, 0.5)
       .setCollideWorldBounds(true)
       .setGravityY(400)
       .setDepth(4)
       .setScale(0.163);
       
-    this.mario.body.setSize(150, 240);
-    this.mario.body.setOffset(61, 280); 
+    // Hitbox fina alineada a sus patas
+    this.mario.body.setSize(140, 200);
+    this.mario.body.setOffset(66, 270); 
     
     this.mario.isBig = false; 
     this.mario.isEating = false; 
@@ -288,8 +287,8 @@ class GameScene extends Phaser.Scene {
         
         if (this.textures.exists('jaiba-eating') && this.anims.exists('jaiba-eat-mushroom')) {
           mario.setTexture('jaiba-eating');
-          mario.body.setSize(150, 240);
-          mario.body.setOffset(53, 760);
+          mario.body.setSize(140, 200);
+          mario.body.setOffset(58, 760);
           mario.anims.play('jaiba-eat-mushroom');
 
           mario.once('animationcomplete-jaiba-eat-mushroom', () => {
@@ -322,8 +321,8 @@ class GameScene extends Phaser.Scene {
           mario.isBig = false;
           mario.setTexture('mario'); 
           mario.setScale(0.163); 
-          mario.body.setSize(150, 240);
-          mario.body.setOffset(61, 280);
+          mario.body.setSize(140, 200);
+          mario.body.setOffset(66, 270);
           mario.body.reset(mario.x, mario.y);
           goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30;
         } else {
@@ -379,8 +378,8 @@ class GameScene extends Phaser.Scene {
       mario.setScale(0.187); 
     }
     mario.y -= 20; 
-    mario.body.setSize(150, 180);
-    mario.body.setOffset(61, 340);
+    mario.body.setSize(140, 180);
+    mario.body.setOffset(66, 330);
     mario.body.reset(mario.x, mario.y);
   }
 
