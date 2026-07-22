@@ -196,7 +196,8 @@ class GameScene extends Phaser.Scene {
         } else if (char === '3') {
           this.createStaticSolid(posX, posY, 'tube-large');
         } else if (char === 'G') {
-          this.createGoomba(posX, posY - 8);
+          // Aparece 16 píxeles más arriba para no nacer incrustado en el suelo
+          this.createGoomba(posX, posY - 16);
         }
       }
     }
@@ -206,7 +207,7 @@ class GameScene extends Phaser.Scene {
     // --- JAIBA (JUGADOR) ---
     const groundTopY = startY + (13 * tileSize);
 
-    this.mario = this.physics.add.sprite(50, groundTopY, 'mario')
+    this.mario = this.physics.add.sprite(50, groundTopY - 10, 'mario')
       .setOrigin(0.5, 1)
       .setCollideWorldBounds(true)
       .setGravityY(400)
@@ -345,12 +346,12 @@ class GameScene extends Phaser.Scene {
           mario.body.reset(mario.x, mario.y);
           goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30;
         } else {
-          // --- SECUENCIA DE MUERTE CORREGIDA ---
+          // --- SECUENCIA DE MUERTE DEFICITIVA CORREGIDA ---
           mario.isDead = true;
           if (this.bgMusic) this.bgMusic.stop();
           
-          // Desactivar colisiones físicas para que pase a través de bloques hacia abajo
-          mario.body.enable = false; 
+          // Eliminamos el motor físico para que caiga atravesando bloques sin problemas
+          mario.body.destroy(); 
           
           if (this.cache.audio.exists('gameover')) this.sound.play('gameover');
           
@@ -358,24 +359,25 @@ class GameScene extends Phaser.Scene {
             mario.anims.stop();
             mario.setTexture('mario-dead');
             
-            // Ajustar proporciones de la imagen de muerte
-            const deadTexture = this.textures.get('mario-dead').getSourceImage();
-            mario.setScale(30 / deadTexture.height); 
-            mario.setDepth(10);
+            // Centrar imagen y escalar proporcionalmente a 18 píxeles de alto
+            mario.setOrigin(0.5, 0.5);
+            const imgHeight = mario.height || 1;
+            mario.setScale(18 / imgHeight); 
+            mario.setDepth(20);
           }
 
-          // Animación clásica estilo Mario: pequeño salto hacia arriba y caída
+          // Animación de muerte: Brincos arriba y cae al abismo
           this.tweens.chain({
             targets: mario,
             tweens: [
               {
-                y: mario.y - 30,
-                duration: 300,
+                y: mario.y - 25,
+                duration: 250,
                 ease: 'Power1'
               },
               {
-                y: this.scale.height + 50,
-                duration: 900,
+                y: this.scale.height + 60,
+                duration: 800,
                 ease: 'Power2'
               }
             ],
