@@ -196,7 +196,6 @@ class GameScene extends Phaser.Scene {
         } else if (char === '3') {
           this.createStaticSolid(posX, posY, 'tube-large');
         } else if (char === 'G') {
-          // Aparece 16 píxeles más arriba para no nacer incrustado en el suelo
           this.createGoomba(posX, posY - 16);
         }
       }
@@ -212,10 +211,11 @@ class GameScene extends Phaser.Scene {
       .setCollideWorldBounds(true)
       .setGravityY(400)
       .setDepth(4)
-      .setScale(0.163);
+      .setScale(0.12); // Escala normal ligeramente más ajustada
       
-    this.mario.body.setSize(140, 260);
-    this.mario.body.setOffset(66, 270); 
+    // HITBOX REDUCIDA: Para que quepa fácilmente debajo de bloques de 16px
+    this.mario.body.setSize(100, 200);
+    this.mario.body.setOffset(86, 330); 
     
     this.mario.isBig = false; 
     this.mario.isEating = false; 
@@ -340,18 +340,18 @@ class GameScene extends Phaser.Scene {
         if (mario.isBig) {
           mario.isBig = false;
           mario.setTexture('mario'); 
-          mario.setScale(0.163); 
-          mario.body.setSize(140, 260);
-          mario.body.setOffset(66, 270);
+          mario.setScale(0.12); 
+          mario.body.setSize(100, 200);
+          mario.body.setOffset(86, 330);
           mario.body.reset(mario.x, mario.y);
           goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30;
         } else {
-          // --- SECUENCIA DE MUERTE DEFICITIVA CORREGIDA ---
+          // --- SECUENCIA DE MUERTE CORREGIDA ---
           mario.isDead = true;
           if (this.bgMusic) this.bgMusic.stop();
           
-          // Eliminamos el motor físico para que caiga atravesando bloques sin problemas
-          mario.body.destroy(); 
+          // Se inhabilita por completo la física para que atraviese libremente el suelo/bloques
+          mario.body.enable = false;
           
           if (this.cache.audio.exists('gameover')) this.sound.play('gameover');
           
@@ -359,25 +359,24 @@ class GameScene extends Phaser.Scene {
             mario.anims.stop();
             mario.setTexture('mario-dead');
             
-            // Centrar imagen y escalar proporcionalmente a 18 píxeles de alto
+            // Mantiene proporciones reales de la imagen sin estirarse
             mario.setOrigin(0.5, 0.5);
-            const imgHeight = mario.height || 1;
-            mario.setScale(18 / imgHeight); 
+            mario.setDisplaySize(16, 16); // Tamaño exacto de un bloque NES (16x16)
             mario.setDepth(20);
           }
 
-          // Animación de muerte: Brincos arriba y cae al abismo
+          // Salto y caída limpia
           this.tweens.chain({
             targets: mario,
             tweens: [
               {
-                y: mario.y - 25,
+                y: mario.y - 20,
                 duration: 250,
                 ease: 'Power1'
               },
               {
-                y: this.scale.height + 60,
-                duration: 800,
+                y: this.scale.height + 40,
+                duration: 750,
                 ease: 'Power2'
               }
             ],
@@ -419,10 +418,10 @@ class GameScene extends Phaser.Scene {
 
     if (this.textures.exists('mario-grow')) {
       mario.setTexture('mario-grow');
-      mario.setScale(0.187); 
+      mario.setScale(0.14); 
     }
-    mario.body.setSize(140, 240);
-    mario.body.setOffset(66, 270);
+    mario.body.setSize(120, 220);
+    mario.body.setOffset(76, 290);
     mario.body.reset(mario.x, mario.y);
   }
 
