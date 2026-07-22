@@ -14,8 +14,6 @@ class TitleScene extends Phaser.Scene {
     // Assets de escenario de fondo
     this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png');
     this.load.image('mountain1', 'assets/scenery/overworld/mountain1.png');
-    this.load.image('mountain2', 'assets/scenery/overworld/mountain2.png');
-    this.load.image('bush1', 'assets/scenery/overworld/bush1.png');
 
     // Elementos del juego y coleccionables
     this.load.spritesheet('mario', 'assets/entities/mario.png', { frameWidth: 273, frameHeight: 547 });
@@ -24,7 +22,7 @@ class TitleScene extends Phaser.Scene {
     this.load.image('mushroom', 'assets/collectibles/super-mushroom.png');
     this.load.spritesheet('coin', 'assets/collectibles/coin.png', { frameWidth: 16, frameHeight: 16 }); 
     
-    // Tuberías y bloques normales
+    // Tuberías, bloques y estructuras
     this.load.image('tube-small', 'assets/scenery/vertical-small-tube.png');
     this.load.image('tube-medium', 'assets/scenery/vertical-large-tube.png');
     this.load.image('tube-large', 'assets/scenery/vertical-large-tube.png');
@@ -99,7 +97,6 @@ class GameScene extends Phaser.Scene {
 
   create() {
     const height = this.scale.height;
-    const groundY = height - 16; 
 
     if (this.cache.audio.exists('theme') && !this.sound.get('theme')) {
       this.bgMusic = this.sound.add('theme', { loop: true, volume: 0.5 });
@@ -109,6 +106,25 @@ class GameScene extends Phaser.Scene {
     }
 
     this.cameras.main.setBackgroundColor('#a9d0f5'); 
+
+    // --- MATRIZ COMPLETA DEL NIVEL 1-1 ---
+    const level1 = [
+      "...................................................................................................................................................................................................................",
+      "...................................................................................................................................................................................................................",
+      "...................................................................................................................................................................................................................",
+      "..........................................................................................................................................................................................................F........",
+      "..........................................................................................................................................................................................................F........",
+      "..........................................................................................................................................................................................................F........",
+      "...............C.......C.................................C................C.................................C.........................................................C...................................F........",
+      ".........................................................................................................BBBBBB...........................................................................................F........",
+      "......................C................................$M$M$.............................................................................................................................L................F..HHHHHH",
+      "....................BBBBB.........................................................................................................33....................................................LL................F..HHHHHH",
+      "......................................................................22..........................................................33...................................................LLL................F..HHHHHH",
+      "..............................11......................................22..........................................................33..................................................LLLL................F..HHHHHH",
+      "..................G...........11...............G..................G...22.............G................................G...........33.............G.............................G.....LLLLL................F..HHHHHH",
+      "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX...XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX....XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX...XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX....XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    ];
 
     // --- GRUPOS FÍSICOS ---
     this.floor = this.physics.add.staticGroup();
@@ -137,57 +153,57 @@ class GameScene extends Phaser.Scene {
       });
     }
 
-    // --- CONSTRUCCIÓN DE PLATAFORMAS DE SUELO ---
-    for (let x = 0; x < 1120; x += 16) {
-      this.floor.create(x + 8, groundY + 8, 'floorbricks').setDepth(2).refreshBody();
+    // --- DIBUJADO DINÁMICO DE LA MATRIZ ---
+    const tileSize = 16;
+    const startY = height - (level1.length * tileSize);
+
+    for (let fila = 0; fila < level1.length; fila++) {
+      for (let col = 0; col < level1[fila].length; col++) {
+        const char = level1[fila][col];
+        const posX = col * tileSize + (tileSize / 2);
+        const posY = startY + (fila * tileSize) + (tileSize / 2);
+
+        if (char === 'X' || char === 'L' || char === 'H') {
+          // Bloques sólidos (Suelo, Escalones, Castillo)
+          this.floor.create(posX, posY, 'floorbricks').setDepth(2).refreshBody();
+        } else if (char === 'B') {
+          // Ladrillos
+          this.bricks.create(posX, posY, 'brick').setDepth(2).refreshBody();
+        } else if (char === '$') {
+          // Bloque sorpresa de moneda
+          let box = this.mysteryBoxes.create(posX, posY, 'mysteryBox').setDepth(2).refreshBody();
+          box.content = 'coin';
+          if (this.anims.exists('box-shine')) box.anims.play('box-shine', true);
+        } else if (char === 'M') {
+          // Bloque sorpresa de hongo
+          let box = this.mysteryBoxes.create(posX, posY, 'mysteryBox').setDepth(2).refreshBody();
+          box.content = 'mushroom';
+          if (this.anims.exists('box-shine')) box.anims.play('box-shine', true);
+        } else if (char === '1') {
+          this.createStaticSolid(posX, posY, 'tube-small');
+        } else if (char === '2') {
+          this.createStaticSolid(posX, posY, 'tube-medium');
+        } else if (char === '3') {
+          this.createStaticSolid(posX, posY, 'tube-large');
+        } else if (char === 'G') {
+          this.createGoomba(posX, posY);
+        } else if (char === 'C' && this.textures.exists('cloud1')) {
+          this.add.image(posX, posY, 'cloud1').setScale(0.12).setAlpha(0.9).setDepth(1);
+        }
+      }
     }
-    for (let x = 1152; x < 1376; x += 16) {
-      this.floor.create(x + 8, groundY + 8, 'floorbricks').setDepth(2).refreshBody();
-    }
-    for (let x = 1424; x < 3500; x += 16) {
-      this.floor.create(x + 8, groundY + 8, 'floorbricks').setDepth(2).refreshBody();
-    }
-
-    // --- DISTRIBUCIÓN DEL MUNDO 1-1 ---
-    this.createMysteryBox(256, groundY - 56, 'mushroom');
-
-    this.createBrick(320, groundY - 56);
-    this.createMysteryBox(336, groundY - 56, 'coin');
-    this.createBrick(352, groundY - 56);
-    this.createMysteryBox(368, groundY - 56, 'coin');
-    this.createBrick(384, groundY - 56);
-    this.createMysteryBox(352, groundY - 104, 'coin');
-
-    this.createStaticSolid(448, groundY, 'tube-small');
-    this.createStaticSolid(608, groundY, 'tube-medium');
-    this.createStaticSolid(736, groundY, 'tube-large');
-
-    this.createStaticSolid(912, groundY, 'tube-large');
-    this.createMysteryBox(1024, groundY - 56, 'mushroom'); 
-
-    this.createBrick(1232, groundY - 56);
-    this.createMysteryBox(1248, groundY - 56, 'coin');
-    this.createBrick(1264, groundY - 56);
-
-    // --- COLOCACIÓN DE ENEMIGOS ---
-    this.createGoomba(300, groundY - 8);
-    this.createGoomba(400, groundY - 8);
-    this.createGoomba(660, groundY - 8);
-    this.createGoomba(820, groundY - 8);
-    this.createGoomba(1000, groundY - 8);
 
     this.registerPlayerAnimations();
 
-    // --- JUGADOR (JAIBA CORREGIDA) ---
-    // Aparece directamente a nivel de suelo para que no empiece atorada
-    this.mario = this.physics.add.sprite(80, groundY - 24, 'mario')
+    // --- JUGADOR (JAIBA) ---
+    const groundY = height - 16;
+    this.mario = this.physics.add.sprite(50, groundY - 24, 'mario')
       .setOrigin(0.5, 0.5)
       .setCollideWorldBounds(true)
       .setGravityY(400)
       .setDepth(4)
       .setScale(0.163);
       
-    // MODIFICACIÓN CRÍTICA: Ajuste perfecto de la Hitbox para que no se hunda
     this.mario.body.setSize(150, 240);
     this.mario.body.setOffset(61, 280); 
     
@@ -195,7 +211,9 @@ class GameScene extends Phaser.Scene {
     this.mario.isEating = false; 
     this.mario.isDead = false;
 
-    this.physics.world.setBounds(0, 0, 3500, height);
+    // Calcular el ancho total en base a la fila más larga
+    const worldWidth = level1[level1.length - 1].length * tileSize;
+    this.physics.world.setBounds(0, 0, worldWidth, height);
 
     // --- INTERFAZ DEL CONTADOR (UI) ---
     this.coinText = this.add.text(16, 16, 'MONEDAS: 0', {
@@ -330,31 +348,20 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    this.cameras.main.setBounds(0, 0, 3500, height);
+    this.cameras.main.setBounds(0, 0, worldWidth, height);
     this.cameras.main.startFollow(this.mario);
     this.keys = this.input.keyboard.createCursorKeys();
   }
 
-  createMysteryBox(x, y, contentType) {
-    const box = this.mysteryBoxes.create(x, y, 'mysteryBox').setOrigin(0.5).setDepth(2).refreshBody();
-    box.content = contentType;
-    if (this.anims.exists('box-shine')) box.anims.play('box-shine', true);
-    return box;
-  }
-
-  createBrick(x, y) {
-    return this.bricks.create(x, y, 'brick').setOrigin(0.5).setDepth(2).refreshBody();
-  }
-
   createStaticSolid(x, y, assetKey) {
-    let element = this.add.image(x, y, assetKey).setOrigin(0.5, 1).setDepth(2);
+    let element = this.add.image(x, y, assetKey).setOrigin(0.5, 0.5).setDepth(2);
     this.physics.add.existing(element, true);
     this.floor.add(element);
     return element;
   }
 
   createGoomba(x, y) {
-    const goomba = this.goombas.create(x, y, 'goomba').setOrigin(0.5, 1).setDepth(3);
+    const goomba = this.goombas.create(x, y, 'goomba').setOrigin(0.5, 0.5).setDepth(3);
     goomba.setVelocityX(-35);
     goomba.setCollideWorldBounds(true);
     goomba.body.setBounce(1, 0); 
@@ -437,7 +444,7 @@ class GameScene extends Phaser.Scene {
     }
 
     if (this.keys.up.isDown && this.mario.body.touching.down) {
-      this.mario.setVelocityY(-260); // Ajustado para un salto más fluido y controlado
+      this.mario.setVelocityY(-260);
       if (this.cache.audio.exists('jump')) this.sound.play('jump');
     }
 
