@@ -34,7 +34,7 @@ class TitleScene extends Phaser.Scene {
     this.load.image('mario-dead', 'assets/entities/mario-dead.png'); 
     this.load.spritesheet('goomba', 'assets/entities/overworld/goomba.png', { frameWidth: 16, frameHeight: 16 });
 
-    // Audio (con fallbacks automáticos si el servidor no los encuentra)
+    // Audio
     this.load.audio('theme', 'assets/sound/music/overworld.mp3');
     this.load.audio('jump', 'assets/sound/effects/jump.mp3');
     this.load.audio('kick', 'assets/sound/effects/kick.mp3');
@@ -100,7 +100,6 @@ class GameScene extends Phaser.Scene {
   create() {
     const height = this.scale.height;
 
-    // Música de fondo segura
     if (this.cache.audio.exists('theme')) {
       if (!this.sound.get('theme')) {
         this.bgMusic = this.sound.add('theme', { loop: true, volume: 0.5 });
@@ -112,7 +111,7 @@ class GameScene extends Phaser.Scene {
 
     this.cameras.main.setBackgroundColor('#a9d0f5'); 
 
-    // --- MATRIZ COMPLETA BASADA EN TU LEYENDA ---
+    // --- MATRIZ COMPLETA DEL NIVEL 1-1 ---
     const level1 = [
       "...................................................................................................................................................................................................................",
       "...................................................................................................................................................................................................................",
@@ -159,7 +158,7 @@ class GameScene extends Phaser.Scene {
       });
     }
 
-    // --- CONSTRUCCIÓN DINÁMICA DEL MAPA ---
+    // --- CONSTRUCCIÓN DEL MAPA ---
     const tileSize = 16;
     const startY = height - (level1.length * tileSize);
 
@@ -169,28 +168,22 @@ class GameScene extends Phaser.Scene {
         const posX = col * tileSize + (tileSize / 2);
         const posY = startY + (fila * tileSize) + (tileSize / 2);
 
-        // Textura base de bloques con soporte si falta alguna
         const brickTex = this.textures.exists('brick') ? 'brick' : 'floorbricks';
         const floorTex = this.textures.exists('floorbricks') ? 'floorbricks' : 'brick';
 
         if (char === 'X' || char === 'L' || char === 'H') {
-          // X = Piso, L = Escalera, H = Castillo
           this.floor.create(posX, posY, (char === 'X') ? floorTex : brickTex).setDepth(2).refreshBody();
         } else if (char === 'B') {
-          // B = Ladrillo rompible
           this.bricks.create(posX, posY, brickTex).setDepth(2).refreshBody();
         } else if (char === '$') {
-          // $ = Bloque con moneda
           let box = this.mysteryBoxes.create(posX, posY, 'mysteryBox').setDepth(2).refreshBody();
           box.content = 'coin';
           if (this.anims.exists('box-shine')) box.anims.play('box-shine', true);
         } else if (char === 'M') {
-          // M = Bloque con hongo
           let box = this.mysteryBoxes.create(posX, posY, 'mysteryBox').setDepth(2).refreshBody();
           box.content = 'mushroom';
           if (this.anims.exists('box-shine')) box.anims.play('box-shine', true);
         } else if (char === 'C') {
-          // C = Moneda flotante
           if (this.textures.exists('coin')) {
             let coin = this.floatingCoins.create(posX, posY, 'coin').setDepth(3);
             coin.body.setAllowGravity(false);
@@ -203,36 +196,36 @@ class GameScene extends Phaser.Scene {
         } else if (char === '3') {
           this.createStaticSolid(posX, posY, 'tube-large');
         } else if (char === 'G') {
-          this.createGoomba(posX, posY);
+          // Creación corregida del Goomba apoyado exactamente sobre la superficie
+          this.createGoomba(posX, posY - 8);
         }
       }
     }
 
     this.registerPlayerAnimations();
 
-    // --- CREACIÓN Y UBICACIÓN CORRECTA DE LA JAIBA ---
+    // --- CREACIÓN DE LA JAIBA (AJUSTADA A LA SUPERFICIE DEL SUELO) ---
     const groundTopY = startY + (13 * tileSize);
 
-    this.mario = this.physics.add.sprite(50, groundTopY - 28, 'mario')
-      .setOrigin(0.5, 0.5)
+    this.mario = this.physics.add.sprite(50, groundTopY, 'mario')
+      .setOrigin(0.5, 1) // Anclamos el origen a los pies de la Jaiba
       .setCollideWorldBounds(true)
       .setGravityY(400)
       .setDepth(4)
       .setScale(0.163);
       
-    // Hitbox ajustada para no incrustarse en el piso
-    this.mario.body.setSize(140, 200);
+    // Ajuste fino de la caja de colisión exactamente a sus patas
+    this.mario.body.setSize(140, 260);
     this.mario.body.setOffset(66, 270); 
     
     this.mario.isBig = false; 
     this.mario.isEating = false; 
     this.mario.isDead = false;
 
-    // Límites del mundo según la anchura de la matriz
     const worldWidth = level1[level1.length - 1].length * tileSize;
     this.physics.world.setBounds(0, 0, worldWidth, height);
 
-    // --- INTERFAZ DE MONEDAS ---
+    // UI
     this.coinText = this.add.text(16, 16, 'MONEDAS: 0', {
       fontFamily: '"Courier New", Courier, monospace',
       fontSize: '12px',
@@ -241,7 +234,7 @@ class GameScene extends Phaser.Scene {
       strokeThickness: 3
     }).setDepth(10).setScrollFactor(0);
     
-    // --- COLISIONES Y CONTACTOS ---
+    // --- COLISIONES ---
     this.physics.add.collider(this.mario, this.floor);
     this.physics.add.collider(this.mario, this.bricks);
     this.physics.add.collider(this.mushrooms, this.floor);
@@ -250,7 +243,7 @@ class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.goombas, this.bricks);
     this.physics.add.collider(this.goombas, this.mysteryBoxes);
 
-    // Recoger monedas flotantes
+    // Overlap Monedas
     this.physics.add.overlap(this.mario, this.floatingCoins, (mario, coin) => {
       coin.destroy();
       this.coinsCollected++;
@@ -258,7 +251,7 @@ class GameScene extends Phaser.Scene {
       if (this.cache.audio.exists('powerup')) this.sound.play('powerup');
     });
 
-    // Golpe a Bloques Sorpresa
+    // Bloques Sorpresa
     this.physics.add.collider(this.mario, this.mysteryBoxes, (mario, boxHit) => {
       if (mario.body.touching.up) {
         if (boxHit.content !== 'empty') {
@@ -301,7 +294,7 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    // Recoger Champiñón
+    // Champiñones
     this.physics.add.overlap(this.mario, this.mushrooms, (mario, mushroomHit) => {
       if (mario.isEating || mario.isDead) return;
       mushroomHit.destroy(); 
@@ -328,7 +321,7 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    // Colisión contra Goombas
+    // Goombas
     this.physics.add.collider(this.mario, this.goombas, (mario, goombaHit) => {
       if (mario.isEating || mario.isDead) return;
       
@@ -349,7 +342,7 @@ class GameScene extends Phaser.Scene {
           mario.isBig = false;
           mario.setTexture('mario'); 
           mario.setScale(0.163); 
-          mario.body.setSize(140, 200);
+          mario.body.setSize(140, 260);
           mario.body.setOffset(66, 270);
           mario.body.reset(mario.x, mario.y);
           goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30;
@@ -389,7 +382,9 @@ class GameScene extends Phaser.Scene {
 
   createGoomba(x, y) {
     if (!this.textures.exists('goomba')) return null;
-    const goomba = this.goombas.create(x, y, 'goomba').setOrigin(0.5, 0.5).setDepth(3);
+    const goomba = this.goombas.create(x, y, 'goomba')
+      .setOrigin(0.5, 1) // Anclamos el origen a los pies del Goomba
+      .setDepth(3);
     goomba.setVelocityX(-35);
     goomba.setCollideWorldBounds(true);
     goomba.body.setBounce(1, 0); 
@@ -406,9 +401,8 @@ class GameScene extends Phaser.Scene {
       mario.setTexture('mario-grow');
       mario.setScale(0.187); 
     }
-    mario.y -= 20; 
-    mario.body.setSize(140, 180);
-    mario.body.setOffset(66, 330);
+    mario.body.setSize(140, 240);
+    mario.body.setOffset(66, 270);
     mario.body.reset(mario.x, mario.y);
   }
 
@@ -492,7 +486,7 @@ function showGameOverMenu(scene) {
   retryButton.on('pointerdown', () => scene.scene.restart());
 }
 
-// --- CONFIGURACIÓN GLOBAL DE PHASER ---
+// --- CONFIGURACIÓN GLOBAL ---
 const config = {
   type: Phaser.AUTO,
   width: 256,
