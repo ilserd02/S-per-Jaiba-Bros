@@ -190,13 +190,10 @@ class GameScene extends Phaser.Scene {
             if (this.anims.exists('coin-spin')) coin.play('coin-spin');
           }
         } else if (char === '1') {
-          // Tubería pequeña: 32px ancho x 24px alto
           this.createPipe(posX + 8, posY + 8, 'tube-small', 32, 24);
         } else if (char === '2') {
-          // Tubería mediana: 32px ancho x 32px alto
           this.createPipe(posX + 8, posY + 8, 'tube-medium', 32, 32);
         } else if (char === '3') {
-          // Tubería grande: 32px ancho x 40px alto
           this.createPipe(posX + 8, posY + 8, 'tube-large', 32, 40);
         } else if (char === 'G') {
           this.createGoomba(posX, posY - 16);
@@ -216,7 +213,6 @@ class GameScene extends Phaser.Scene {
       .setDepth(4)
       .setScale(0.12);
       
-    // Hitbox ajustada
     this.mario.body.setSize(100, 200);
     this.mario.body.setOffset(86, 330); 
     
@@ -476,8 +472,9 @@ class GameScene extends Phaser.Scene {
       if (this.anims.exists(idleKey)) this.mario.anims.play(idleKey, true); 
     }
 
+    // --- SALTO AUMENTADO DE -320 A -370 ---
     if (this.keys.up.isDown && this.mario.body.touching.down) {
-      this.mario.setVelocityY(-320);
+      this.mario.setVelocityY(-370);
       if (this.cache.audio.exists('jump')) this.sound.play('jump');
     }
 
