@@ -190,11 +190,14 @@ class GameScene extends Phaser.Scene {
             if (this.anims.exists('coin-spin')) coin.play('coin-spin');
           }
         } else if (char === '1') {
-          this.createPipe(posX + 8, posY + 8, 'tube-small', 32, 32);
+          // Tubería pequeña: 32px ancho x 24px alto
+          this.createPipe(posX + 8, posY + 8, 'tube-small', 32, 24);
         } else if (char === '2') {
-          this.createPipe(posX + 8, posY + 8, 'tube-medium', 32, 48);
+          // Tubería mediana: 32px ancho x 32px alto
+          this.createPipe(posX + 8, posY + 8, 'tube-medium', 32, 32);
         } else if (char === '3') {
-          this.createPipe(posX + 8, posY + 8, 'tube-large', 32, 64);
+          // Tubería grande: 32px ancho x 40px alto
+          this.createPipe(posX + 8, posY + 8, 'tube-large', 32, 40);
         } else if (char === 'G') {
           this.createGoomba(posX, posY - 16);
         }
@@ -213,7 +216,7 @@ class GameScene extends Phaser.Scene {
       .setDepth(4)
       .setScale(0.12);
       
-    // Hitbox reducida y centrada
+    // Hitbox ajustada
     this.mario.body.setSize(100, 200);
     this.mario.body.setOffset(86, 330); 
     
@@ -325,7 +328,7 @@ class GameScene extends Phaser.Scene {
       if (mario.isEating || mario.isDead) return;
       
       if (mario.body.touching.down && goombaHit.body.touching.up) {
-        mario.setVelocityY(-200); // Pequeño rebotecito al pisar al goomba
+        mario.setVelocityY(-200); 
         if (this.cache.audio.exists('kick')) this.sound.play('kick');
         
         goombaHit.setVelocityX(0);
@@ -346,28 +349,25 @@ class GameScene extends Phaser.Scene {
           mario.body.reset(mario.x, mario.y);
           goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30;
         } else {
-          // --- SECUENCIA DE MUERTE CORREGIDA ---
+          // --- SECUENCIA DE MUERTE ---
           mario.isDead = true;
           if (this.bgMusic) this.bgMusic.stop();
           
-          // Desactivar físicas totalmente
           mario.body.enable = false;
           
           if (this.cache.audio.exists('gameover')) this.sound.play('gameover');
           
           if (this.textures.exists('mario-dead')) {
-            mario.anims.stop(); // Detener cualquier frame de la caminata
+            mario.anims.stop(); 
             mario.setFlipX(false);
             mario.setTexture('mario-dead');
             
-            // Forzar reseteo de dimensiones exactas
             mario.setOrigin(0.5, 0.5);
-            mario.setScale(1); // Limpiar escalados previos
-            mario.setDisplaySize(18, 18); // Tamaño único y pequeño uniforme
+            mario.setScale(1); 
+            mario.setDisplaySize(18, 18); 
             mario.setDepth(20);
           }
 
-          // Salto y caída limpia atravesando plataformas
           this.tweens.chain({
             targets: mario,
             tweens: [
@@ -476,7 +476,6 @@ class GameScene extends Phaser.Scene {
       if (this.anims.exists(idleKey)) this.mario.anims.play(idleKey, true); 
     }
 
-    // --- SALTO MÁS ALTO (-320 en vez de -260) ---
     if (this.keys.up.isDown && this.mario.body.touching.down) {
       this.mario.setVelocityY(-320);
       if (this.cache.audio.exists('jump')) this.sound.play('jump');
