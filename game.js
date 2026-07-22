@@ -111,7 +111,7 @@ class GameScene extends Phaser.Scene {
 
     this.cameras.main.setBackgroundColor('#a9d0f5'); 
 
-    // --- MATRIZ COMPLETA DEL NIVEL 1-1 ---
+    // --- MATRIZ COMPLETA DEL NIVEL ---
     const level1 = [
       "...................................................................................................................................................................................................................",
       "...................................................................................................................................................................................................................",
@@ -158,7 +158,7 @@ class GameScene extends Phaser.Scene {
       });
     }
 
-    // --- CONSTRUCCIÓN DEL MAPA ---
+    // --- DIBUJADO DE LA MATRIZ ---
     const tileSize = 16;
     const startY = height - (level1.length * tileSize);
 
@@ -196,7 +196,6 @@ class GameScene extends Phaser.Scene {
         } else if (char === '3') {
           this.createStaticSolid(posX, posY, 'tube-large');
         } else if (char === 'G') {
-          // Creación corregida del Goomba apoyado exactamente sobre la superficie
           this.createGoomba(posX, posY - 8);
         }
       }
@@ -204,17 +203,16 @@ class GameScene extends Phaser.Scene {
 
     this.registerPlayerAnimations();
 
-    // --- CREACIÓN DE LA JAIBA (AJUSTADA A LA SUPERFICIE DEL SUELO) ---
+    // --- JAIBA (JUGADOR) ---
     const groundTopY = startY + (13 * tileSize);
 
     this.mario = this.physics.add.sprite(50, groundTopY, 'mario')
-      .setOrigin(0.5, 1) // Anclamos el origen a los pies de la Jaiba
+      .setOrigin(0.5, 1)
       .setCollideWorldBounds(true)
       .setGravityY(400)
       .setDepth(4)
       .setScale(0.163);
       
-    // Ajuste fino de la caja de colisión exactamente a sus patas
     this.mario.body.setSize(140, 260);
     this.mario.body.setOffset(66, 270); 
     
@@ -321,7 +319,7 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    // Goombas
+    // Goombas (Colisión con el jugador)
     this.physics.add.collider(this.mario, this.goombas, (mario, goombaHit) => {
       if (mario.isEating || mario.isDead) return;
       
@@ -347,20 +345,40 @@ class GameScene extends Phaser.Scene {
           mario.body.reset(mario.x, mario.y);
           goombaHit.x += (goombaHit.x > mario.x) ? 30 : -30;
         } else {
+          // --- SECUENCIA DE MUERTE CORREGIDA ---
           mario.isDead = true;
           if (this.bgMusic) this.bgMusic.stop();
-          mario.body.allowGravity = false;
+          
+          // Desactivar colisiones físicas para que pase a través de bloques hacia abajo
           mario.body.enable = false; 
           
           if (this.cache.audio.exists('gameover')) this.sound.play('gameover');
           
           if (this.textures.exists('mario-dead')) {
+            mario.anims.stop();
             mario.setTexture('mario-dead');
-            mario.setScale(0.175);
+            
+            // Ajustar proporciones de la imagen de muerte
+            const deadTexture = this.textures.get('mario-dead').getSourceImage();
+            mario.setScale(30 / deadTexture.height); 
+            mario.setDepth(10);
           }
 
-          this.tweens.add({
-            targets: mario, alpha: 0, delay: 1000, duration: 800, 
+          // Animación clásica estilo Mario: pequeño salto hacia arriba y caída
+          this.tweens.chain({
+            targets: mario,
+            tweens: [
+              {
+                y: mario.y - 30,
+                duration: 300,
+                ease: 'Power1'
+              },
+              {
+                y: this.scale.height + 50,
+                duration: 900,
+                ease: 'Power2'
+              }
+            ],
             onComplete: () => { showGameOverMenu(this); }
           });
         }
@@ -383,7 +401,7 @@ class GameScene extends Phaser.Scene {
   createGoomba(x, y) {
     if (!this.textures.exists('goomba')) return null;
     const goomba = this.goombas.create(x, y, 'goomba')
-      .setOrigin(0.5, 1) // Anclamos el origen a los pies del Goomba
+      .setOrigin(0.5, 1)
       .setDepth(3);
     goomba.setVelocityX(-35);
     goomba.setCollideWorldBounds(true);
