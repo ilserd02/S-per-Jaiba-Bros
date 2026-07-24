@@ -1,22 +1,3 @@
-// --- CONFIGURACIÓN PRINCIPAL (Escala Full) ---
-const config = {
-  type: Phaser.AUTO,
-  width: 256,
-  height: 240,
-  backgroundColor: '#5c94fc', // Azul cielo por defecto
-  pixelArt: true, // Renderizado nítido de píxeles
-  physics: {
-    default: 'arcade',
-    arcade: {
-      gravity: { y: 500 },
-      debug: false
-    }
-  },
-  scene: [GameScene]
-};
-
-const game = new Phaser.Game(config);
-
 // --- ESCENA PRINCIPAL DEL JUEGO ---
 class GameScene extends Phaser.Scene {
   constructor() {
@@ -24,7 +5,7 @@ class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    // Assets principales (Rutas originales)
+    // Assets principales (Personaje y bloques)
     this.load.image('mario', 'assets/mario.png');
     this.load.image('floorbricks', 'assets/brick.png');
     this.load.image('stone', 'assets/stone.png');
@@ -55,16 +36,10 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
-    const levelWidth = 1700; // Ancho completo del mapa original
+    const levelWidth = 1700;
 
-    // Asignar fondo azul del cielo a la cámara principal
+    // Asignar el color azul cielo
     this.cameras.main.setBackgroundColor('#5c94fc');
-
-    // Música de fondo (si está disponible)
-    if (this.cache.audio.exists('theme') && !this.sound.get('theme')) {
-      this.bgMusic = this.sound.add('theme', { loop: true, volume: 0.5 });
-      this.bgMusic.play();
-    }
 
     // Nubes de fondo
     for (let x = 100; x < levelWidth; x += 300) {
@@ -73,7 +48,7 @@ class GameScene extends Phaser.Scene {
       }
     }
 
-    // Grupos con físicas arcade
+    // Grupos físicos
     this.floor = this.physics.add.staticGroup();
     this.mysteryBoxes = this.physics.add.staticGroup();
     this.mushrooms = this.physics.add.group();
@@ -81,10 +56,10 @@ class GameScene extends Phaser.Scene {
 
     this.createAnimations();
 
-    // Generar el mapa 1-1 completo
+    // Generar el mapa
     this.loadMap1_1();
 
-    // Crear personaje con tamaño original
+    // Crear personaje principal
     if (this.textures.exists('mario')) {
       this.mario = this.physics.add.sprite(50, 100, 'mario')
         .setOrigin(0.5, 0.5)
@@ -167,7 +142,7 @@ class GameScene extends Phaser.Scene {
         }
       });
 
-      // Seguimiento de Cámara Full
+      // Seguimiento de Cámara
       this.cameras.main.setBounds(0, 0, levelWidth, config.height);
       this.cameras.main.startFollow(this.mario);
     }
@@ -333,3 +308,24 @@ class GameScene extends Phaser.Scene {
     }
   }
 }
+
+// --- CONFIGURACIÓN PRINCIPAL DE PHASER ---
+const config = {
+  type: Phaser.AUTO,
+  parent: 'game', // Conecta con <div id="game"></div> de tu index.html
+  width: 256,
+  height: 240,
+  backgroundColor: '#5c94fc',
+  pixelArt: true,
+  physics: {
+    default: 'arcade',
+    arcade: {
+      gravity: { y: 500 },
+      debug: false
+    }
+  },
+  scene: [GameScene]
+};
+
+// Inicializar el juego
+const game = new Phaser.Game(config);
