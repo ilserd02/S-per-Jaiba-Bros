@@ -36,8 +36,8 @@ class GameScene extends Phaser.Scene {
     this.load.image('tube-large', 'assets/pipe-large.png');
     this.load.image('tube-horizontal', 'assets/pipe-horizontal.png');
 
-    // --- POWER-UPS Y COLECCIONABLES ---
-    this.load.image('mario', 'assets/jaiba.png'); // Sprite del personaje
+    // --- PERSONAJE Y POWER-UPS ---
+    this.load.image('mario', 'assets/jaiba.png');
     this.load.image('mushroom', 'assets/mushroom.png');
     this.load.image('coin', 'assets/coin.png');
     this.load.image('flower', 'assets/flower.png');
@@ -62,7 +62,10 @@ class GameScene extends Phaser.Scene {
   create() {
     const levelWidth = 1700;
 
-    // Música de fondo (si está en la caché)
+    // --- COLOR DE FONDO (Azul cielo de Mario para evitar pantalla negra) ---
+    this.cameras.main.setBackgroundColor('#5c94fc');
+
+    // Música de fondo (si existe)
     if (this.cache.audio.exists('theme') && !this.sound.get('theme')) {
       this.bgMusic = this.sound.add('theme', { loop: true, volume: 0.5 });
       this.bgMusic.play();
@@ -70,10 +73,12 @@ class GameScene extends Phaser.Scene {
 
     // Decoración de fondo (Nubes)
     for (let x = 100; x < levelWidth; x += 300) {
-      this.add.image(x, 40, 'cloud1').setOrigin(0, 0).setScale(0.15);
+      if (this.textures.exists('cloud1')) {
+        this.add.image(x, 40, 'cloud1').setOrigin(0, 0).setScale(0.15);
+      }
     }
 
-    // Grupos físicos con colisiones
+    // Grupos físicos
     this.floor = this.physics.add.staticGroup();
     this.mysteryBoxes = this.physics.add.staticGroup();
     this.mushrooms = this.physics.add.group();
@@ -81,7 +86,7 @@ class GameScene extends Phaser.Scene {
 
     this.createAnimations();
 
-    // Cargar mapa 1-1
+    // Cargar nivel 1-1
     this.loadMap1_1();
 
     // Jugador (Jaiba)
@@ -105,7 +110,7 @@ class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.mushrooms, this.floor);
     this.physics.add.collider(this.goombas, this.floor);
 
-    // Golpe a Cajas Misteriosas
+    // Golpe a Bloques Sorpresa
     this.physics.add.collider(this.mario, this.mysteryBoxes, (mario, boxHit) => {
       if (mario.body.touching.up) {
         if (boxHit.hasItem) {
@@ -131,7 +136,7 @@ class GameScene extends Phaser.Scene {
       this.convertirEnGrande(mario);
     });
 
-    // Contacto con Enemigos
+    // Colisión con Enemigos
     this.physics.add.collider(this.mario, this.goombas, (mario, goombaHit) => {
       if (mario.isEating || mario.isDead) return;
       
@@ -166,7 +171,7 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    // Seguimiento de Cámara
+    // Cámara
     this.cameras.main.setBounds(0, 0, levelWidth, config.height);
     this.cameras.main.startFollow(this.mario);
 
@@ -219,7 +224,9 @@ class GameScene extends Phaser.Scene {
 
       if (item.macro === "Floor") {
         for (let x = posX; x < posX + item.width; x += 16) {
-          this.floor.create(x, config.height - 8, 'floorbricks').setOrigin(0, 0.5).refreshBody();
+          if (this.textures.exists('floorbricks')) {
+            this.floor.create(x, config.height - 8, 'floorbricks').setOrigin(0, 0.5).refreshBody();
+          }
         }
       } 
       else if (item.macro === "Pipe") {
@@ -227,33 +234,47 @@ class GameScene extends Phaser.Scene {
         if (item.height >= 32) pipeTexture = 'tube-large';
         else if (item.height >= 24) pipeTexture = 'tube-medium';
 
-        this.floor.create(posX, config.height - (item.height / 2), pipeTexture).refreshBody();
+        if (this.textures.exists(pipeTexture)) {
+          this.floor.create(posX, config.height - (item.height / 2), pipeTexture).refreshBody();
+        }
       } 
       else if (item.thing === "Block") {
-        const box = this.mysteryBoxes.create(posX, posY, 'mysteryBox').setOrigin(0, 0.5).refreshBody();
-        box.hasItem = (item.contents === "Mushroom");
+        if (this.textures.exists('mysteryBox')) {
+          const box = this.mysteryBoxes.create(posX, posY, 'mysteryBox').setOrigin(0, 0.5).refreshBody();
+          box.hasItem = (item.contents === "Mushroom");
+        }
       } 
       else if (item.thing === "Brick") {
-        this.floor.create(posX, posY, 'floorbricks').setOrigin(0, 0.5).refreshBody();
+        if (this.textures.exists('floorbricks')) {
+          this.floor.create(posX, posY, 'floorbricks').setOrigin(0, 0.5).refreshBody();
+        }
       } 
       else if (item.thing === "Stone") {
-        const h = item.height || 8;
-        for (let yOffset = 0; yOffset < h; yOffset += 8) {
-          this.floor.create(posX, config.height - 16 - yOffset, 'stone').setOrigin(0, 0.5).refreshBody();
+        if (this.textures.exists('stone')) {
+          const h = item.height || 8;
+          for (let yOffset = 0; yOffset < h; yOffset += 8) {
+            this.floor.create(posX, config.height - 16 - yOffset, 'stone').setOrigin(0, 0.5).refreshBody();
+          }
         }
       } 
       else if (item.thing === "Goomba") {
-        const goomba = this.goombas.create(posX, config.height - 24 - (item.y || 0), 'goomba').setOrigin(0.5, 0.5);
-        goomba.setVelocityX(-40);
-        goomba.setCollideWorldBounds(true);
+        if (this.textures.exists('goomba')) {
+          const goomba = this.goombas.create(posX, config.height - 24 - (item.y || 0), 'goomba').setOrigin(0.5, 0.5);
+          goomba.setVelocityX(-40);
+          goomba.setCollideWorldBounds(true);
+        }
       } 
       else if (item.thing === "Koopa") {
-        const koopa = this.goombas.create(posX, config.height - 24 - (item.y || 0), 'koopa').setOrigin(0.5, 0.5);
-        koopa.setVelocityX(-35);
-        koopa.setCollideWorldBounds(true);
+        if (this.textures.exists('koopa')) {
+          const koopa = this.goombas.create(posX, config.height - 24 - (item.y || 0), 'koopa').setOrigin(0.5, 0.5);
+          koopa.setVelocityX(-35);
+          koopa.setCollideWorldBounds(true);
+        }
       } 
       else if (item.thing === "Castle") {
-        this.add.image(posX, config.height - 48, 'castle').setOrigin(0, 1);
+        if (this.textures.exists('castle')) {
+          this.add.image(posX, config.height - 48, 'castle').setOrigin(0, 1);
+        }
       }
     });
   }
