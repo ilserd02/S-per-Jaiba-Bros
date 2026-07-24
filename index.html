@@ -4,19 +4,44 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Super Jaiba Bros</title>
+  
   <script src="./phaser.min.js"></script>
-  <script src="./game.js"></script> 
+
   <style>
-    body {
-      display: grid;
-      place-items: center;
-      height: 100vh;
+    * {
+      box-sizing: border-box;
       margin: 0;
-      background: black;
+      padding: 0;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #000;
+      overflow: hidden;
+    }
+
+    /* Contenedor del lienzo de Phaser */
+    #game {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    canvas {
+      image-rendering: pixelated; /* Mantiene los píxeles limpios en pantallas HD */
     }
   </style>
 </head>
 <body>
+
   <div id="game"></div>
+
+  <script src="./game.js"></script>
+
 </body>
 </html>
