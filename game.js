@@ -23,6 +23,9 @@ class GameScene extends Phaser.Scene {
   }
 
   preload() {
+    // --- PERSONAJE (Mantiene assets/mario.png) ---
+    this.load.image('mario', 'assets/mario.png');
+
     // --- BLOQUES Y SUELO ---
     this.load.image('floorbricks', 'assets/brick.png');
     this.load.image('stone', 'assets/stone.png');
@@ -36,8 +39,7 @@ class GameScene extends Phaser.Scene {
     this.load.image('tube-large', 'assets/pipe-large.png');
     this.load.image('tube-horizontal', 'assets/pipe-horizontal.png');
 
-    // --- PERSONAJE Y POWER-UPS ---
-    this.load.image('mario', 'assets/jaiba.png');
+    // --- POWER-UPS Y COLECCIONABLES ---
     this.load.image('mushroom', 'assets/mushroom.png');
     this.load.image('coin', 'assets/coin.png');
     this.load.image('flower', 'assets/flower.png');
@@ -62,10 +64,10 @@ class GameScene extends Phaser.Scene {
   create() {
     const levelWidth = 1700;
 
-    // --- COLOR DE FONDO (Azul cielo de Mario para evitar pantalla negra) ---
+    // --- COLOR DEL CIELO AZUL DE MARIO (Soluciona la pantalla negra) ---
     this.cameras.main.setBackgroundColor('#5c94fc');
 
-    // Música de fondo (si existe)
+    // Música de fondo (si está cargada previamente)
     if (this.cache.audio.exists('theme') && !this.sound.get('theme')) {
       this.bgMusic = this.sound.add('theme', { loop: true, volume: 0.5 });
       this.bgMusic.play();
@@ -86,10 +88,10 @@ class GameScene extends Phaser.Scene {
 
     this.createAnimations();
 
-    // Cargar nivel 1-1
+    // Cargar mapa 1-1
     this.loadMap1_1();
 
-    // Jugador (Jaiba)
+    // Jugador (Personaje usando textura 'mario')
     this.mario = this.physics.add.sprite(50, 100, 'mario')
       .setOrigin(0.5, 0.5)
       .setCollideWorldBounds(true)
